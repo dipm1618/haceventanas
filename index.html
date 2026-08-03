@@ -8,6 +8,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
   :root{
     --bg:#F3F4F1;
@@ -81,11 +82,11 @@
     display:block; font-size:11.5px; font-weight:600; text-transform:uppercase;
     letter-spacing:0.05em; color:var(--ink-soft); margin-bottom:6px;
   }
-  input[type="text"]{
+  input[type="text"], input[type="email"], input[type="password"]{
     width:100%; padding:10px 12px; border:1px solid var(--line); background:#fff;
     font-family:var(--sans); font-size:13px; color:var(--ink);
   }
-  input[type="text"]:focus{outline:2px solid var(--blue); outline-offset:-1px;}
+  input[type="text"]:focus, input[type="email"]:focus, input[type="password"]:focus{outline:2px solid var(--blue); outline-offset:-1px;}
   select{
     width:100%; padding:10px 12px; border:1px solid var(--line); background:#fff;
     font-family:var(--sans); font-size:13.5px; color:var(--ink); appearance:none;
@@ -205,6 +206,21 @@
   .presupuesto-line.total span:first-child{font-family:var(--disp); font-size:13px; text-transform:uppercase; letter-spacing:.04em;}
   .presupuesto-line.total span:last-child{font-family:var(--mono); font-size:20px; font-weight:600; color:var(--orange);}
   .presupuesto-line.sub{color:var(--ink-soft); font-size:12px; padding-top:10px;}
+
+  .auth-error{font-size:11.5px; color:var(--orange); margin-top:6px;}
+  .auth-user{display:flex; justify-content:space-between; align-items:center; padding:8px 0;}
+  .auth-user .email{font-family:var(--mono); font-size:12px; word-break:break-all;}
+  .auth-user .plan-badge{font-family:var(--mono); font-size:10px; text-transform:uppercase; background:var(--blue-soft); color:var(--blue); padding:3px 8px; flex-shrink:0; margin-left:8px;}
+  .link-btn{background:none; border:none; color:var(--blue); font-size:11.5px; text-decoration:underline; cursor:pointer; padding:0; font-family:var(--sans);}
+
+  .saved-item{display:flex; align-items:center; gap:8px; padding:8px 0; border-bottom:1px solid var(--line); font-size:12px;}
+  .saved-item:last-child{border-bottom:none;}
+  .saved-item .info{flex:1; line-height:1.4;}
+  .saved-item .info .n1{font-weight:600;}
+  .saved-item .info .n2{color:var(--ink-soft); font-size:11px;}
+  .saved-item button{border:1px solid var(--line); background:#fff; font-size:11px; padding:5px 8px; cursor:pointer; font-family:var(--sans);}
+  .saved-item button:hover{border-color:var(--blue); color:var(--blue);}
+  .saved-item button.del:hover{border-color:var(--orange); color:var(--orange);}
 </style>
 </head>
 <body>
@@ -219,6 +235,11 @@
 
 <main>
   <div class="left-col">
+
+    <div class="panel">
+      <div class="panel-head"><h2>Tu cuenta</h2><span class="count" id="planBadgeHead"></span></div>
+      <div class="control-body" id="authBody"></div>
+    </div>
 
     <div class="panel">
       <div class="panel-head"><h2>Datos del presupuesto</h2></div>
@@ -270,6 +291,8 @@
       <div class="control-body" style="padding-top:6px;">
         <div id="proyectoList"><div class="empty">Aún no agregas ninguna ventana.</div></div>
       </div>
+      <div class="section-title">Mis proyectos guardados</div>
+      <div class="control-body" id="guardadoBody"></div>
       <div class="section-title">Optimización de barras</div>
       <div class="control-body">
         <div class="dim-row">
@@ -287,13 +310,7 @@
   <div class="panel">
     <div class="panel-head">
       <h2>Resultado consolidado</h2>
-      <div style="display:flex; align-items:center; gap:10px;">
-        <span class="count" id="resumenProyecto"></span>
-        <div class="plan-toggle">
-          <button class="plan-btn active" data-plan="gratis">Gratis</button>
-          <button class="plan-btn" data-plan="pro">Pro</button>
-        </div>
-      </div>
+      <span class="count" id="resumenProyecto"></span>
     </div>
     <div id="resultadoWrap">
       <div class="empty">Agrega ventanas al proyecto para ver la pauta de corte consolidada.</div>
@@ -595,6 +612,151 @@ function drawDiagram(svgId, X, Y){
     <line x1="${ox+14}" y1="${oy+14}" x2="${ox+w-14}" y2="${oy+h-14}" stroke="#9AA3AC" stroke-width="1" stroke-dasharray="3,3"/>
     <line x1="${ox+w-14}" y1="${oy+14}" x2="${ox+14}" y2="${oy+h-14}" stroke="#9AA3AC" stroke-width="1" stroke-dasharray="3,3"/>
   `;
+}
+
+// ---------- Supabase ----------
+const SUPABASE_URL = 'https://wvaawqdtpyvrasbhbobm.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_jgAKYcf-OlRC3eNEgw0l5g__Bcarv6f';
+const sbClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+let sbUser = null;
+
+async function refrescarSesion(){
+  const { data } = await sbClient.auth.getSession();
+  sbUser = data.session ? data.session.user : null;
+  if (sbUser){
+    const { data: perfil } = await sbClient.from('profiles').select('plan, empresa').eq('id', sbUser.id).single();
+    planActual = (perfil && perfil.plan) || 'gratis';
+    if (perfil && perfil.empresa && !document.getElementById('datEmpresa').value){
+      document.getElementById('datEmpresa').value = perfil.empresa;
+    }
+  } else {
+    planActual = 'gratis';
+  }
+  renderAuthUI();
+  renderListaProyectosGuardados();
+  renderResultados();
+}
+
+function renderAuthUI(){
+  const body = document.getElementById('authBody');
+  const badge = document.getElementById('planBadgeHead');
+  if (sbUser){
+    badge.textContent = planActual === 'pro' ? 'Pro' : 'Gratis';
+    body.innerHTML = `
+      <div class="auth-user">
+        <span class="email">${sbUser.email}</span>
+        <span class="plan-badge">${planActual === 'pro' ? 'PRO' : 'GRATIS'}</span>
+      </div>
+      <button class="btn" id="btnLogout" style="margin-top:8px;">Cerrar sesión</button>
+    `;
+    document.getElementById('btnLogout').addEventListener('click', async ()=>{
+      await sbClient.auth.signOut();
+      refrescarSesion();
+    });
+  } else {
+    badge.textContent = '';
+    body.innerHTML = `
+      <div class="field"><label>Email</label><input type="email" id="authEmail" placeholder="tu@correo.com"></div>
+      <div class="field"><label>Contraseña</label><input type="password" id="authPass" placeholder="Mínimo 6 caracteres"></div>
+      <button class="btn" id="btnLogin">Iniciar sesión</button>
+      <div style="height:8px;"></div>
+      <button class="btn secondary" id="btnSignup">Crear cuenta</button>
+      <div class="auth-error" id="authError"></div>
+    `;
+    document.getElementById('btnLogin').addEventListener('click', async ()=>{
+      const email = document.getElementById('authEmail').value.trim();
+      const password = document.getElementById('authPass').value;
+      const { error } = await sbClient.auth.signInWithPassword({ email, password });
+      if (error){ document.getElementById('authError').textContent = error.message; return; }
+      refrescarSesion();
+    });
+    document.getElementById('btnSignup').addEventListener('click', async ()=>{
+      const email = document.getElementById('authEmail').value.trim();
+      const password = document.getElementById('authPass').value;
+      const { error } = await sbClient.auth.signUp({ email, password });
+      if (error){ document.getElementById('authError').textContent = error.message; return; }
+      document.getElementById('authError').style.color = 'var(--blue)';
+      document.getElementById('authError').textContent = 'Cuenta creada. Revisa tu correo para confirmarla y luego inicia sesión.';
+    });
+  }
+}
+
+async function guardarProyectoDB(){
+  if (!sbUser){ alert('Inicia sesión primero para guardar tu proyecto.'); return; }
+  if (proyecto.length===0){ alert('Agrega al menos una ventana antes de guardar.'); return; }
+  const nombre = prompt('Nombre para este proyecto (ej: "Casa Los Aromos"):', document.getElementById('datObra').value || 'Proyecto sin nombre');
+  if (!nombre) return;
+  const payload = {
+    proyecto,
+    precios,
+    largoBarra: document.getElementById('inputBarra').value,
+    kerf: document.getElementById('inputKerf').value,
+    empresa: document.getElementById('datEmpresa').value,
+    cliente: document.getElementById('datCliente').value,
+    obra: document.getElementById('datObra').value,
+  };
+  const { error } = await sbClient.from('projects').insert({
+    user_id: sbUser.id,
+    nombre,
+    cliente: payload.cliente,
+    obra: payload.obra,
+    data: payload,
+  });
+  if (error){ alert('Error al guardar: ' + error.message); return; }
+  renderListaProyectosGuardados();
+}
+
+async function renderListaProyectosGuardados(){
+  const body = document.getElementById('guardadoBody');
+  if (!sbUser){
+    body.innerHTML = '<div class="empty">Inicia sesión para guardar y ver tus proyectos.</div>';
+    return;
+  }
+  const { data, error } = await sbClient.from('projects').select('id,nombre,cliente,obra,updated_at').eq('user_id', sbUser.id).order('updated_at', {ascending:false});
+  body.innerHTML = '';
+  const btnGuardar = document.createElement('button');
+  btnGuardar.className = 'btn'; btnGuardar.textContent = '💾 Guardar proyecto actual';
+  btnGuardar.addEventListener('click', guardarProyectoDB);
+  body.appendChild(btnGuardar);
+  if (error || !data || data.length===0){
+    const empty = document.createElement('div'); empty.className='empty'; empty.style.padding='16px 0 4px';
+    empty.textContent = 'Aún no tienes proyectos guardados.';
+    body.appendChild(empty);
+    return;
+  }
+  data.forEach(p=>{
+    const row = document.createElement('div'); row.className='saved-item'; row.style.marginTop='10px';
+    const fecha = new Date(p.updated_at).toLocaleDateString('es-CL');
+    row.innerHTML = `
+      <div class="info"><div class="n1">${p.nombre}</div><div class="n2">${p.cliente||'Sin cliente'} · ${fecha}</div></div>
+      <button data-id="${p.id}" class="load">Cargar</button>
+      <button data-id="${p.id}" class="del">×</button>
+    `;
+    row.querySelector('.load').addEventListener('click', ()=>cargarProyectoDB(p.id));
+    row.querySelector('.del').addEventListener('click', async ()=>{
+      if (!confirm('¿Eliminar "'+p.nombre+'"? Esta acción no se puede deshacer.')) return;
+      await sbClient.from('projects').delete().eq('id', p.id);
+      renderListaProyectosGuardados();
+    });
+    body.appendChild(row);
+  });
+}
+
+async function cargarProyectoDB(id){
+  const { data, error } = await sbClient.from('projects').select('data').eq('id', id).single();
+  if (error || !data) return;
+  const d = data.data;
+  proyecto = d.proyecto || [];
+  nextId = Math.max(1, ...proyecto.map(i=>i.id||0)) + 1;
+  precios = d.precios || precios;
+  if (d.largoBarra) document.getElementById('inputBarra').value = d.largoBarra;
+  if (d.kerf) document.getElementById('inputKerf').value = d.kerf;
+  document.getElementById('datEmpresa').value = d.empresa||'';
+  document.getElementById('datCliente').value = d.cliente||'';
+  document.getElementById('datObra').value = d.obra||'';
+  desbloqueado = false;
+  renderAll();
 }
 
 // ---------- Formulario "Agregar ventana" ----------
@@ -1135,17 +1297,12 @@ document.getElementById('btnPDF').addEventListener('click', ()=>{
 
 document.getElementById('inputBarra').addEventListener('input', renderResultados);
 document.getElementById('inputKerf').addEventListener('input', renderResultados);
-document.querySelectorAll('.plan-btn').forEach(btn=>{
-  btn.addEventListener('click', ()=>{
-    document.querySelectorAll('.plan-btn').forEach(b=>b.classList.remove('active'));
-    btn.classList.add('active');
-    planActual = btn.dataset.plan;
-    renderResultados();
-  });
-});
+
+sbClient.auth.onAuthStateChange(()=>{ refrescarSesion(); });
 
 updateAddForm();
 renderAll();
+refrescarSesion();
 </script>
 </body>
 </html>
