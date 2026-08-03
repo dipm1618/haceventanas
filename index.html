@@ -1,0 +1,1151 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>haceventanas — Pauta de Corte</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+<style>
+  :root{
+    --bg:#F3F4F1;
+    --panel:#FFFFFF;
+    --ink:#14171A;
+    --ink-soft:#5B6168;
+    --line:#D9DCDD;
+    --blue:#1D4E89;
+    --blue-soft:#E7EEF6;
+    --alum:#9AA3AC;
+    --orange:#E1601C;
+    --orange-soft:#FCE9DE;
+    --mono:'IBM Plex Mono', monospace;
+    --sans:'IBM Plex Sans', sans-serif;
+    --disp:'Space Grotesk', sans-serif;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--bg);
+    background-image:
+      linear-gradient(var(--line) 1px, transparent 1px),
+      linear-gradient(90deg, var(--line) 1px, transparent 1px);
+    background-size:28px 28px;
+    background-attachment:fixed;
+    color:var(--ink);
+    font-family:var(--sans);
+  }
+  header{
+    padding:26px 32px 18px;
+    border-bottom:1px solid var(--line);
+    background:var(--panel);
+  }
+  .brand{display:flex; align-items:baseline; gap:10px; font-family:var(--disp);}
+  .brand .mark{
+    width:34px;height:34px;
+    border:2px solid var(--ink);
+    display:flex;align-items:center;justify-content:center;
+    font-size:15px;font-weight:700;
+    background:var(--orange); color:#fff; flex-shrink:0;
+  }
+  .brand h1{font-size:20px; margin:0; letter-spacing:-0.01em;}
+  .brand .tag{
+    font-family:var(--mono); font-size:11px; color:var(--ink-soft);
+    text-transform:uppercase; letter-spacing:0.08em;
+    border:1px solid var(--line); padding:3px 8px; margin-left:auto;
+  }
+  header p{margin:8px 0 0; color:var(--ink-soft); font-size:13.5px; max-width:680px;}
+
+  main{
+    max-width:1180px; margin:0 auto; padding:26px 32px 90px;
+    display:grid; grid-template-columns:340px 1fr; gap:22px; align-items:start;
+  }
+  @media (max-width:880px){ main{grid-template-columns:1fr;} }
+  .left-col{display:flex; flex-direction:column; gap:20px;}
+
+  .panel{background:var(--panel); border:1px solid var(--line);}
+  .panel-head{
+    padding:13px 18px; border-bottom:1px solid var(--line);
+    display:flex; justify-content:space-between; align-items:center;
+  }
+  .panel-head h2{
+    font-family:var(--disp); font-size:12.5px; text-transform:uppercase;
+    letter-spacing:0.06em; margin:0; color:var(--ink);
+  }
+  .panel-head .count{font-family:var(--mono); font-size:11px; color:var(--ink-soft);}
+  .control-body{padding:16px 18px 18px;}
+
+  .field{margin-bottom:14px;}
+  .field label{
+    display:block; font-size:11.5px; font-weight:600; text-transform:uppercase;
+    letter-spacing:0.05em; color:var(--ink-soft); margin-bottom:6px;
+  }
+  input[type="text"]{
+    width:100%; padding:10px 12px; border:1px solid var(--line); background:#fff;
+    font-family:var(--sans); font-size:13px; color:var(--ink);
+  }
+  input[type="text"]:focus{outline:2px solid var(--blue); outline-offset:-1px;}
+  select{
+    width:100%; padding:10px 12px; border:1px solid var(--line); background:#fff;
+    font-family:var(--sans); font-size:13.5px; color:var(--ink); appearance:none;
+    background-image:linear-gradient(45deg, transparent 50%, var(--ink-soft) 50%), linear-gradient(135deg, var(--ink-soft) 50%, transparent 50%);
+    background-position: calc(100% - 18px) center, calc(100% - 13px) center;
+    background-size:5px 5px, 5px 5px; background-repeat:no-repeat;
+  }
+  .dim-row{display:flex; gap:10px;}
+  .dim-field{flex:1; position:relative;}
+  .dim-field input{
+    width:100%; padding:10px 34px 10px 12px; border:1px solid var(--line);
+    font-family:var(--mono); font-size:14px; font-weight:500; color:var(--ink);
+  }
+  .dim-field input:focus{outline:2px solid var(--blue); outline-offset:-1px;}
+  .dim-field .unit{
+    position:absolute; right:9px; top:50%; transform:translateY(-50%);
+    font-family:var(--mono); font-size:10.5px; color:var(--ink-soft);
+  }
+  .toggle-row{
+    display:flex; align-items:center; justify-content:space-between;
+    padding:8px 0; border-bottom:1px solid var(--line); font-size:12.5px;
+  }
+  .toggle-row:last-child{border-bottom:none;}
+  .switch{width:34px;height:19px; border:1px solid var(--ink); position:relative; cursor:pointer; background:#fff; flex-shrink:0;}
+  .switch .dot{position:absolute; top:2px;left:2px; width:13px;height:13px; background:var(--ink); transition:left .15s ease;}
+  .switch.on{background:var(--orange-soft); border-color:var(--orange);}
+  .switch.on .dot{left:17px; background:var(--orange);}
+
+  .diagram-preview{display:flex; justify-content:center; padding:6px 0 14px;}
+
+  .btn{
+    width:100%; padding:11px 14px; border:1px solid var(--ink); background:var(--ink);
+    color:#fff; font-family:var(--sans); font-weight:600; font-size:13px; cursor:pointer;
+  }
+  .btn:hover{opacity:.85;}
+  .btn.secondary{background:var(--orange); border-color:var(--orange);}
+  .btn:disabled{opacity:.35; cursor:not-allowed;}
+
+  .note{
+    font-size:11.5px; color:var(--ink-soft); margin-top:8px; line-height:1.5;
+    border-left:2px solid var(--alum); padding-left:10px;
+  }
+
+  .proyecto-item{display:flex; align-items:center; gap:8px; padding:9px 0; border-bottom:1px solid var(--line); font-size:12.5px;}
+  .proyecto-item:last-child{border-bottom:none;}
+  .proyecto-item .info{flex:1; line-height:1.45;}
+  .proyecto-item .info .l1{font-family:var(--mono); font-size:12px; font-weight:600;}
+  .proyecto-item .info .l2{color:var(--ink-soft); font-size:11.5px;}
+  .proyecto-item .qty-input{width:42px; padding:5px; border:1px solid var(--line); font-family:var(--mono); font-size:12px; text-align:center;}
+  .proyecto-item .del{width:24px;height:24px; border:1px solid var(--line); background:#fff; cursor:pointer; color:var(--ink-soft); font-size:14px; line-height:1; flex-shrink:0;}
+  .proyecto-item .del:hover{border-color:var(--orange); color:var(--orange);}
+
+  .empty{padding:44px 20px; text-align:center; color:var(--ink-soft); font-size:12.5px; line-height:1.6;}
+
+  .section-title{
+    padding:16px 18px 8px; font-family:var(--disp); font-size:12.5px; text-transform:uppercase;
+    letter-spacing:0.06em; color:var(--blue); border-top:1px solid var(--line); margin-top:4px;
+  }
+  .section-title:first-child{border-top:none; margin-top:0;}
+  .spec-table{width:100%; border-collapse:collapse;}
+  .spec-table th{
+    text-align:left; font-family:var(--mono); font-size:10.5px; text-transform:uppercase;
+    letter-spacing:0.05em; color:var(--ink-soft); padding:8px 14px;
+    border-bottom:1px solid var(--ink); background:#FAFAF9;
+  }
+  .spec-table td{padding:9px 14px; font-size:13px; border-bottom:1px solid var(--line);}
+  .spec-table td.mono, .spec-table td.num{font-family:var(--mono);}
+  .spec-table td.num{font-weight:600;}
+  .spec-table tr:hover td{background:var(--blue-soft);}
+  .codigo-pill{display:inline-block; font-family:var(--mono); font-size:11.5px; font-weight:600; background:var(--ink); color:#fff; padding:2px 7px;}
+
+  .opt-summary{display:flex; gap:24px; flex-wrap:wrap; padding:14px 18px; background:#FAFAF9; border-top:1px solid var(--line); border-bottom:1px solid var(--line);}
+  .opt-stat .num{font-family:var(--mono); font-size:21px; font-weight:600; color:var(--blue); line-height:1.1;}
+  .opt-stat .lbl{font-family:var(--mono); font-size:10px; text-transform:uppercase; letter-spacing:0.05em; color:var(--ink-soft); margin-top:2px;}
+
+  .bar-group{margin:0 18px 16px; border:1px solid var(--line);}
+  .bar-group-head{padding:9px 12px; background:#FAFAF9; border-bottom:1px solid var(--line); display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:6px;}
+  .bar-group-head .codigo-pill{background:var(--blue);}
+  .bar-group-head .meta{font-family:var(--mono); font-size:11px; color:var(--ink-soft);}
+  .bar-row{display:flex; align-items:center; gap:10px; padding:7px 12px; border-bottom:1px solid var(--line);}
+  .bar-row:last-child{border-bottom:none;}
+  .bar-row .bar-label{font-family:var(--mono); font-size:10.5px; color:var(--ink-soft); width:44px; flex-shrink:0;}
+  .bar-track{flex:1; height:26px; background:#fff; display:flex; border:1px solid var(--line); overflow:hidden;}
+  .bar-piece{height:100%; display:flex; align-items:center; justify-content:center; font-family:var(--mono); font-size:9.5px; color:#fff; border-right:2px solid #fff; overflow:hidden; white-space:nowrap; flex-shrink:0;}
+  .bar-waste{height:100%; background:repeating-linear-gradient(45deg,#fff,#fff 4px,var(--orange-soft) 4px,var(--orange-soft) 8px); flex-shrink:0;}
+  .bar-row .bar-waste-label{font-family:var(--mono); font-size:10.5px; color:var(--ink-soft); width:76px; text-align:right; flex-shrink:0;}
+  .warn-box{margin:16px 18px; padding:12px 14px; background:var(--orange-soft); border:1px solid var(--orange); font-size:12.5px; color:#7A3110;}
+  .footnote{padding:14px 18px 20px; font-size:11.5px; color:var(--ink-soft); line-height:1.5;}
+
+  .plan-toggle{display:flex; border:1px solid var(--line);}
+  .plan-btn{padding:5px 10px; font-family:var(--mono); font-size:10px; text-transform:uppercase; letter-spacing:.04em; background:#fff; border:none; cursor:pointer; color:var(--ink-soft);}
+  .plan-btn:first-child{border-right:1px solid var(--line);}
+  .plan-btn.active{background:var(--ink); color:#fff;}
+
+  .ad-gate{padding:54px 30px; text-align:center;}
+  .ad-gate-badge{display:inline-block; font-family:var(--mono); font-size:10px; text-transform:uppercase; letter-spacing:.05em; background:var(--orange-soft); color:#7A3110; padding:4px 10px; margin-bottom:16px;}
+  .ad-gate-icon{font-size:30px; color:var(--orange); margin-bottom:10px;}
+  .ad-gate h3{font-family:var(--disp); font-size:16px; margin:0 0 8px; color:var(--ink);}
+  .ad-gate p{color:var(--ink-soft); font-size:13px; max-width:360px; margin:0 auto 22px; line-height:1.55;}
+  .ad-mock{width:100%; max-width:300px; height:8px; background:#ECECEA; margin:22px auto 10px; border:1px solid var(--line); overflow:hidden;}
+  .ad-mock-bar{height:100%; width:0%; background:var(--orange); transition:width 1s linear;}
+  .ad-countdown{font-family:var(--mono); font-size:12px; color:var(--ink-soft);}
+
+  .price-row{display:flex; align-items:center; gap:10px; padding:7px 12px; border-bottom:1px solid var(--line);}
+  .price-row:last-child{border-bottom:none;}
+  .price-row .price-label{flex:1; font-size:12.5px; display:flex; align-items:center; gap:8px;}
+  .price-row .price-input-wrap{position:relative; width:130px; flex-shrink:0;}
+  .price-row .price-input-wrap span{position:absolute; left:9px; top:50%; transform:translateY(-50%); font-family:var(--mono); font-size:12px; color:var(--ink-soft);}
+  .price-row input{width:100%; padding:7px 8px 7px 22px; border:1px solid var(--line); font-family:var(--mono); font-size:12.5px; text-align:right;}
+  .price-row input:focus{outline:2px solid var(--blue); outline-offset:-1px;}
+  .price-subhead{padding:10px 12px 4px; font-family:var(--mono); font-size:10.5px; text-transform:uppercase; letter-spacing:.05em; color:var(--ink-soft);}
+
+  .presupuesto-box{margin:0 18px 18px; border:1px solid var(--line);}
+  .presupuesto-line{display:flex; justify-content:space-between; padding:8px 14px; font-size:13px; border-bottom:1px solid var(--line);}
+  .presupuesto-line span:last-child{font-family:var(--mono); font-weight:500;}
+  .presupuesto-line.total{background:var(--ink); color:#fff; padding:14px; border-bottom:none;}
+  .presupuesto-line.total span:first-child{font-family:var(--disp); font-size:13px; text-transform:uppercase; letter-spacing:.04em;}
+  .presupuesto-line.total span:last-child{font-family:var(--mono); font-size:20px; font-weight:600; color:var(--orange);}
+  .presupuesto-line.sub{color:var(--ink-soft); font-size:12px; padding-top:10px;}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">
+    <div class="mark">HV</div>
+    <h1>haceventanas — Pauta de Corte</h1>
+  </div>
+  <p>Arma el proyecto completo de una casa: agrega cada ventana con su línea y medidas, y el sistema consolida y optimiza el corte de todas juntas. Descarga la pauta lista para el taller en PDF.</p>
+</header>
+
+<main>
+  <div class="left-col">
+
+    <div class="panel">
+      <div class="panel-head"><h2>Datos del presupuesto</h2></div>
+      <div class="control-body">
+        <div class="field"><label for="datEmpresa">Tu empresa</label><input type="text" id="datEmpresa" placeholder="Nombre de tu empresa"></div>
+        <div class="field"><label for="datCliente">Cliente</label><input type="text" id="datCliente" placeholder="Nombre del cliente"></div>
+        <div class="field" style="margin-bottom:0;"><label for="datObra">Obra / dirección</label><input type="text" id="datObra" placeholder="Ej: Casa Los Aromos 123"></div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-head"><h2>Agregar ventana</h2></div>
+      <div class="control-body">
+        <div class="field">
+          <label for="addLineSelect">Línea y configuración</label>
+          <select id="addLineSelect"></select>
+        </div>
+        <div class="field">
+          <label>Medidas del vano (mm)</label>
+          <div class="dim-row">
+            <div class="dim-field"><input type="number" id="addX" value="1200" min="1"><span class="unit">X</span></div>
+            <div class="dim-field"><input type="number" id="addY" value="1000" min="1"><span class="unit">Y</span></div>
+          </div>
+        </div>
+        <div class="field" id="addMNWrap" style="display:none;">
+          <label>Configuración de hoja S-50</label>
+          <div class="dim-row">
+            <div class="dim-field"><input type="number" id="addM" value="2" min="0"><span class="unit">M</span></div>
+            <div class="dim-field"><input type="number" id="addN" value="4" min="0"><span class="unit">N</span></div>
+          </div>
+        </div>
+        <div class="field" id="addTogglesWrap" style="display:none;">
+          <label>Variantes</label>
+          <div id="addTogglesList"></div>
+        </div>
+        <div class="diagram-preview"><svg id="diagramAdd" width="260" height="180" viewBox="0 0 260 180"></svg></div>
+        <div class="field" style="margin-bottom:10px;">
+          <label>Cantidad de ventanas iguales</label>
+          <div class="dim-row">
+            <div class="dim-field"><input type="number" id="addCantidad" value="1" min="1"><span class="unit">u.</span></div>
+          </div>
+        </div>
+        <button class="btn" id="btnAgregar">+ Agregar al proyecto</button>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-head"><h2>Proyecto</h2><span class="count" id="proyectoCount">0 ventanas</span></div>
+      <div class="control-body" style="padding-top:6px;">
+        <div id="proyectoList"><div class="empty">Aún no agregas ninguna ventana.</div></div>
+      </div>
+      <div class="section-title">Optimización de barras</div>
+      <div class="control-body">
+        <div class="dim-row">
+          <div class="dim-field"><input type="number" id="inputBarra" value="6000" min="500" step="100"><span class="unit">mm</span></div>
+          <div class="dim-field"><input type="number" id="inputKerf" value="3" min="0" step="0.5"><span class="unit">mm</span></div>
+        </div>
+        <div class="note">Largo de barra comercial · Grosor de sierra (kerf) entre cortes.</div>
+        <div style="height:14px;"></div>
+        <button class="btn secondary" id="btnPDF" disabled>Descargar PDF del proyecto</button>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="panel">
+    <div class="panel-head">
+      <h2>Resultado consolidado</h2>
+      <div style="display:flex; align-items:center; gap:10px;">
+        <span class="count" id="resumenProyecto"></span>
+        <div class="plan-toggle">
+          <button class="plan-btn active" data-plan="gratis">Gratis</button>
+          <button class="plan-btn" data-plan="pro">Pro</button>
+        </div>
+      </div>
+    </div>
+    <div id="resultadoWrap">
+      <div class="empty">Agrega ventanas al proyecto para ver la pauta de corte consolidada.</div>
+    </div>
+  </div>
+</main>
+
+<script>
+// ---------- Datos base (Catálogo Sodal 2026) ----------
+const LINEAS = [
+  { id:"3200", grupo:"Puertas", nombre:"Abatir Serie 3200 — 1 hoja", vars:["X","Y"],
+    perfiles:[
+      {codigo:"3222", cantidad:"1", largo:"X", corte:"45/45"},
+      {codigo:"3222", cantidad:"1", largo:"Y", corte:"45/90"},
+      {codigo:"3222", cantidad:"1", largo:"Y", corte:"90/45"},
+      {codigo:"3225", cantidad:"2", largo:"X-42", corte:"45/45"},
+      {codigo:"3225", cantidad:"2", largo:"Y-29", corte:"45/45"},
+    ],
+    vidrio:[{cantidad:"1", ancho:"X-190", alto:"Y-177"}],
+  },
+  { id:"4600", grupo:"Puertas", nombre:"Vaivén Serie 4600 (quicio MAB)", vars:["X","Y"],
+    perfiles:[
+      {codigo:"4604", cantidad:"2", largo:"Y-18"},
+      {codigo:"4602", cantidad:"2", largo:"X-118"},
+    ],
+    vidrio:[{cantidad:"1", ancho:"X-102", alto:"Y-192"}],
+  },
+  { id:"S50", grupo:"Puertas", nombre:"Acceso Principal S-50 (1 hoja vaivén)", vars:["X","Y","M","N"],
+    perfiles:[
+      {codigo:"S501", cantidad:"2", largo:"Y-20"},
+      {codigo:"S502", cantidad:"M", largo:"X-250"},
+      {codigo:"S503", cantidad:"N", largo:"X-250"},
+    ],
+    vidrio:[{cantidad:"N+1", ancho:"X-234", alto:"((Y-20)-(M+N)*120)/(N+1)+16"}],
+  },
+  { id:"4800", grupo:"Correderas", nombre:"Serie 4800 — 2 hojas", vars:["X","Y"], toggles:["reforzada"],
+    perfiles:[
+      {codigo:"4801", cantidad:"1", largo:"X-16"},
+      {codigo:"4802", cantidad:"1", largo:"X-16"},
+      {codigo:"4803", cantidad:"2", largo:"Y"},
+      {codigo:"4804", cantidad:"2", largo:"X/2-15"},
+      {codigo:"4805", cantidad:"2", largo:"X/2-15"},
+      {codigo:{normal:"4806", reforzada:"4810"}, cantidad:"2", largo:"Y-32"},
+      {codigo:{normal:"4808", reforzada:"4811"}, cantidad:"2", largo:"Y-32"},
+    ],
+    vidrio:[{cantidad:"2", ancho:"X/2-44", alto:"Y-93"}],
+  },
+  { id:"S20", grupo:"Correderas", nombre:"Serie 20 — 2 hojas", vars:["X","Y"], toggles:["tp"],
+    perfiles:[
+      {codigo:"2001", cantidad:"1", largo:"X-12"},
+      {codigo:"2002", cantidad:"1", largo:"X-12"},
+      {codigo:"2009", cantidad:"2", largo:"Y"},
+      {codigo:"2004", cantidad:"2", largo:"X/2-4"},
+      {codigo:"2005", cantidad:"2", largo:"X/2-4"},
+      {codigo:{normal:"2019", tp:"2016"}, cantidad:"2", largo:"Y-28"},
+      {codigo:{normal:"2010", tp:"2020"}, cantidad:"2", largo:"Y-28"},
+    ],
+    vidrio:[{cantidad:"2", ancho:"X/2-57", alto:"Y-101"}],
+  },
+  { id:"S25", grupo:"Correderas", nombre:"Serie 25 — 2 hojas", vars:["X","Y"], toggles:["reforzada","tp"],
+    perfiles:[
+      {codigo:"2501", cantidad:"1", largo:"X-16"},
+      {codigo:"2502", cantidad:"1", largo:"X-16"},
+      {codigo:"2509", cantidad:"2", largo:"Y"},
+      {codigo:"2504", cantidad:"2", largo:"X/2+3"},
+      {codigo:"2505", cantidad:"2", largo:"X/2"},
+      {codigo:{normal:"2507", reforzada:"2511R", tp:"2519", reforzada_tp:"2530R"}, cantidad:"2", largo:"Y-35"},
+      {codigo:{normal:"2510", reforzada:"2512R", tp:"2517", reforzada_tp:"2529R"}, cantidad:"2", largo:"Y-35"},
+    ],
+    vidrio:[{cantidad:"1", ancho:"X/2-66", alto:"Y-128"}],
+  },
+  { id:"S28-2", grupo:"Correderas", nombre:"Óptima S-28 — 2 hojas (termopanel)", vars:["X","Y"],
+    perfiles:[
+      {codigo:"S281", cantidad:"2", largo:"X", corte:"45/45"},
+      {codigo:"S281", cantidad:"2", largo:"Y", corte:"45/45"},
+      {codigo:"S282", cantidad:"4", largo:"X/2+3", corte:"45/45"},
+      {codigo:"S282", cantidad:"4", largo:"Y-61", corte:"45/45"},
+      {codigo:"S283", cantidad:"2", largo:"Y-61", corte:"90/90"},
+      {codigo:"S286", cantidad:"1", largo:"X", corte:"90/90"},
+    ],
+    termopanel:[{cantidad:"2", ancho:"X/2-107", alto:"Y-171"}],
+  },
+  { id:"S28-3", grupo:"Correderas", nombre:"Óptima S-28 — 3 hojas (termopanel)", vars:["X","Y"],
+    perfiles:[
+      {codigo:"S285", cantidad:"2", largo:"X", corte:"45/45"},
+      {codigo:"S285", cantidad:"2", largo:"Y", corte:"45/45"},
+      {codigo:"S282", cantidad:"6", largo:"X/3+24", corte:"45/45"},
+      {codigo:"S282", cantidad:"6", largo:"Y-61", corte:"45/45"},
+      {codigo:"S283", cantidad:"4", largo:"Y-61", corte:"90/90"},
+      {codigo:"S286", cantidad:"1", largo:"X", corte:"90/90"},
+    ],
+    termopanel:[{cantidad:"2", ancho:"X/3-86", alto:"Y-171"}],
+  },
+  { id:"S33", grupo:"Correderas", nombre:"S-33 — 2 hojas", vars:["X","Y"],
+    perfiles:[
+      {codigo:"3324", cantidad:"2", largo:"X", corte:"45/45"},
+      {codigo:"3324", cantidad:"2", largo:"Y", corte:"45/45"},
+      {codigo:"3308", cantidad:"4", largo:"X/2", corte:"45/45"},
+      {codigo:"3308", cantidad:"4", largo:"Y-72", corte:"45/45"},
+      {codigo:"3303", cantidad:"2", largo:"Y-72", corte:"90/90"},
+    ],
+    vidrio:[{cantidad:"2", ancho:"X/2-112", alto:"Y-184"}],
+  },
+  { id:"S33RPT", grupo:"Correderas", nombre:"S-33 RPT — 2 hojas (termopanel)", vars:["X","Y"],
+    perfiles:[
+      {codigo:"3324R", cantidad:"2", largo:"X", corte:"45/45"},
+      {codigo:"3324R", cantidad:"2", largo:"Y", corte:"45/45"},
+      {codigo:"3308R", cantidad:"4", largo:"X/2+2", corte:"45/45"},
+      {codigo:"3308R", cantidad:"4", largo:"Y-64", corte:"45/45"},
+      {codigo:"3303", cantidad:"2", largo:"Y-64", corte:"90/90"},
+    ],
+    termopanel:[{cantidad:"2", ancho:"X/2-109", alto:"Y-175"}],
+  },
+  { id:"42cam", grupo:"Fijos y proyectantes", nombre:"Serie 42 — Proyectante con cámara", vars:["X","Y"],
+    perfiles:[
+      {codigo:"4209", cantidad:"1", largo:"X", corte:"45/45"},
+      {codigo:"4231", cantidad:"1", largo:"X+40", corte:"45/45"},
+      {codigo:"4209", cantidad:"2", largo:"Y-20", corte:"45/45"},
+      {codigo:"4202", cantidad:"2", largo:"X-14", corte:"45/45"},
+      {codigo:"4202", cantidad:"2", largo:"Y-34", corte:"45/45"},
+      {codigo:"4229", cantidad:"2", largo:"X-86", corte:"34/34"},
+      {codigo:"4229", cantidad:"2", largo:"Y-106", corte:"90/90"},
+    ],
+    vidrio:[{cantidad:"1", ancho:"X-93", alto:"Y-113"}],
+  },
+  { id:"42sin", grupo:"Fijos y proyectantes", nombre:"Serie 42 — Proyectante sin cámara", vars:["X","Y"],
+    perfiles:[
+      {codigo:"4209", cantidad:"2", largo:"X", corte:"45/45"},
+      {codigo:"4209", cantidad:"2", largo:"Y", corte:"45/45"},
+      {codigo:"4202", cantidad:"2", largo:"X-14", corte:"45/45"},
+      {codigo:"4202", cantidad:"2", largo:"Y-14", corte:"45/45"},
+      {codigo:"4229", cantidad:"2", largo:"X-86", corte:"34/34"},
+      {codigo:"4229", cantidad:"2", largo:"Y-86", corte:"90/90"},
+    ],
+    vidrio:[{cantidad:"1", ancho:"X-93", alto:"Y-93"}],
+  },
+  { id:"S38cam", grupo:"Fijos y proyectantes", nombre:"S-38 — Proyectante con cámara", vars:["X","Y"],
+    perfiles:[
+      {codigo:"S381", cantidad:"2", largo:"X", corte:"45/45"},
+      {codigo:"S381", cantidad:"2", largo:"Y-24", corte:"45/45"},
+      {codigo:"S385", cantidad:"1", largo:"X", corte:"45/45"},
+      {codigo:"S386", cantidad:"2", largo:"X-33", corte:"45/45"},
+      {codigo:"S386", cantidad:"2", largo:"X-57", corte:"45/45"},
+    ],
+    vidrio:[{cantidad:"1", ancho:"X-117", alto:"Y-141"}],
+  },
+  { id:"S38RPTproy", grupo:"Fijos y proyectantes", nombre:"S-38 RPT — Proyectante", vars:["X","Y"],
+    perfiles:[
+      {codigo:"S381R", cantidad:"2", largo:"X", corte:"45/45"},
+      {codigo:"S381R", cantidad:"2", largo:"Y", corte:"45/45"},
+      {codigo:"S386R", cantidad:"2", largo:"X-33", corte:"45/45"},
+      {codigo:"S386R", cantidad:"2", largo:"Y-33", corte:"45/45"},
+    ],
+    termopanel:[{cantidad:"1", ancho:"X-133", alto:"Y-133"}],
+  },
+  { id:"S83-4", grupo:"Multi Slide", nombre:"S-83 — 4 hojas", vars:["X","Y"],
+    perfiles:[
+      {codigo:"S831", cantidad:"1", largo:"X-26"},
+      {codigo:"S832", cantidad:"1", largo:"X-26"},
+      {codigo:"S833", cantidad:"2", largo:"Y"},
+      {codigo:"S834", cantidad:"4", largo:"X/4-9"},
+    ],
+    vidrio:[{cantidad:"4", ancho:"X/4-10", alto:"Y-86"}],
+  },
+  { id:"S83-8", grupo:"Multi Slide", nombre:"S-83 — 8 hojas", vars:["X","Y"],
+    perfiles:[
+      {codigo:"S831", cantidad:"1", largo:"X-26"},
+      {codigo:"S832", cantidad:"1", largo:"X-26"},
+      {codigo:"S833", cantidad:"2", largo:"Y"},
+      {codigo:"S834", cantidad:"8", largo:"X/8-7"},
+    ],
+    vidrio:[{cantidad:"8", ancho:"X/8-8", alto:"Y-86"}],
+  },
+];
+const TOGGLE_LABELS = { reforzada:"Reforzada", tp:"Con termopanel" };
+const PALETTE = ['#1D4E89','#E1601C','#3E7CB1','#6B8E23','#8B5CF6','#B8860B','#0E7C7B'];
+
+// ---------- Motor de cálculo ----------
+function evaluar(formula, vars){
+  if (formula === undefined || formula === null) return null;
+  let f = String(formula);
+  f = f.replace(/(\d)\(/g, '$1*(');
+  f = f.replace(/(\d)([XYMN])/g, '$1*$2');
+  try{
+    const fn = new Function('X','Y','M','N', 'return (' + f + ');');
+    const v = fn(vars.X, vars.Y, vars.M||0, vars.N||0);
+    return Math.round(v * 100) / 100;
+  }catch(e){ return null; }
+}
+function resolverCodigo(codigo, toggles){
+  if (typeof codigo === 'string') return codigo;
+  const t = toggles || {};
+  if (t.reforzada && t.tp && codigo.reforzada_tp) return codigo.reforzada_tp;
+  if (t.reforzada && codigo.reforzada) return codigo.reforzada;
+  if (t.tp && codigo.tp) return codigo.tp;
+  return codigo.normal;
+}
+function colorFor(len){ return PALETTE[Math.abs(Math.round(len)) % PALETTE.length]; }
+
+// ---------- Estado del proyecto ----------
+let proyecto = [];
+let nextId = 1;
+let addFormToggles = {};
+let planActual = 'gratis';
+let desbloqueado = false;
+let precios = { perfiles:{}, vidrio:{ Vidrio:0, Termopanel:0 }, manoObra:0, accesorios:0, margen:30, descuento:0, iva:19 };
+
+function clp(n){ return '$' + Math.round(n||0).toLocaleString('es-CL'); }
+
+function lineaDe(id){ return LINEAS.find(l=>l.id===id); }
+
+function calcularItemPerfiles(item){
+  const line = lineaDe(item.lineaId);
+  const vars = {X:item.X, Y:item.Y, M:item.M||0, N:item.N||0};
+  return line.perfiles.map(p=>{
+    const codigo = resolverCodigo(p.codigo, item.toggles||{});
+    const cantidad = Math.round(evaluar(p.cantidad, vars)) || 0;
+    const largo = evaluar(p.largo, vars);
+    return {codigo, cantidad, largo, corte:p.corte||null};
+  }).filter(r=>r.largo!==null && r.largo>0 && r.cantidad>0);
+}
+function calcularItemVidrio(item){
+  const line = lineaDe(item.lineaId);
+  const vars = {X:item.X, Y:item.Y, M:item.M||0, N:item.N||0};
+  const cristales = line.vidrio || line.termopanel;
+  const tipo = line.vidrio ? 'Vidrio' : 'Termopanel';
+  if (!cristales) return [];
+  return cristales.map(v=>{
+    const cantidad = Math.round(evaluar(v.cantidad, vars))||0;
+    const ancho = evaluar(v.ancho, vars);
+    const alto = evaluar(v.alto, vars);
+    return {tipo, ancho, alto, cantidad};
+  }).filter(r=>r.ancho>0 && r.alto>0 && r.cantidad>0);
+}
+function consolidarProyecto(){
+  const perfilesMap = {};
+  const vidrios = [];
+  proyecto.forEach(item=>{
+    calcularItemPerfiles(item).forEach(p=>{
+      const key = p.codigo+'|'+p.largo;
+      if (!perfilesMap[key]) perfilesMap[key] = {codigo:p.codigo, largo:p.largo, corte:p.corte, cantidad:0};
+      perfilesMap[key].cantidad += p.cantidad * item.cantidad;
+    });
+    calcularItemVidrio(item).forEach(v=>{
+      vidrios.push({tipo:v.tipo, ancho:v.ancho, alto:v.alto, cantidad:v.cantidad*item.cantidad});
+    });
+  });
+  return {perfiles:Object.values(perfilesMap), vidrios};
+}
+function agruparVidrios(vidrios){
+  const map = {};
+  vidrios.forEach(v=>{
+    const key = v.tipo+'|'+v.ancho+'|'+v.alto;
+    if (!map[key]) map[key] = {tipo:v.tipo, ancho:v.ancho, alto:v.alto, cantidad:0};
+    map[key].cantidad += v.cantidad;
+  });
+  return Object.values(map);
+}
+function agruparPiezasPorCodigo(perfilesConsolidados){
+  const grupos = {};
+  perfilesConsolidados.forEach(p=>{
+    if (!grupos[p.codigo]) grupos[p.codigo] = [];
+    for (let i=0;i<p.cantidad;i++) grupos[p.codigo].push(p.largo);
+  });
+  return grupos;
+}
+function optimizarBarras(piezas, largoBarra, kerf){
+  const ordenadas = [...piezas].sort((a,b)=>b-a);
+  const barras = [];
+  ordenadas.forEach(p=>{
+    let colocada = false;
+    for (const barra of barras){
+      const necesita = p + (barra.piezas.length>0 ? kerf : 0);
+      if (barra.usado + necesita <= largoBarra){
+        barra.piezas.push(p); barra.usado += necesita; colocada = true; break;
+      }
+    }
+    if (!colocada) barras.push({piezas:[p], usado:p, error: p > largoBarra});
+  });
+  return barras;
+}
+
+// ---------- Diagrama tipo plano ----------
+function drawDiagram(svgId, X, Y){
+  const svg = document.getElementById(svgId);
+  const vb = svg.viewBox.baseVal;
+  const W = vb.width, H = vb.height;
+  const maxDim = Math.min(W,H) - 70;
+  const ratio = X/Y;
+  let w, h;
+  if (ratio >= 1){ w = maxDim; h = maxDim/ratio; } else { h = maxDim; w = maxDim*ratio; }
+  const ox = (W-w)/2, oy = 34;
+  svg.innerHTML = `
+    <rect x="${ox}" y="${oy}" width="${w}" height="${h}" fill="#E7EEF6" stroke="#1D4E89" stroke-width="2"/>
+    <line x1="${ox}" y1="${oy-12}" x2="${ox+w}" y2="${oy-12}" stroke="#5B6168" stroke-width="1"/>
+    <text x="${ox+w/2}" y="${oy-18}" text-anchor="middle" font-family="IBM Plex Mono" font-size="10.5" fill="#14171A">X = ${X} mm</text>
+    <line x1="${ox+w+12}" y1="${oy}" x2="${ox+w+12}" y2="${oy+h}" stroke="#5B6168" stroke-width="1"/>
+    <text x="${ox+w+20}" y="${oy+h/2}" font-family="IBM Plex Mono" font-size="10.5" fill="#14171A" transform="rotate(90 ${ox+w+20} ${oy+h/2})" text-anchor="middle">Y = ${Y} mm</text>
+    <line x1="${ox+14}" y1="${oy+14}" x2="${ox+w-14}" y2="${oy+h-14}" stroke="#9AA3AC" stroke-width="1" stroke-dasharray="3,3"/>
+    <line x1="${ox+w-14}" y1="${oy+14}" x2="${ox+14}" y2="${oy+h-14}" stroke="#9AA3AC" stroke-width="1" stroke-dasharray="3,3"/>
+  `;
+}
+
+// ---------- Formulario "Agregar ventana" ----------
+const addLineSelect = document.getElementById('addLineSelect');
+const grupos = [...new Set(LINEAS.map(l=>l.grupo))];
+grupos.forEach(g=>{
+  const og = document.createElement('optgroup'); og.label = g;
+  LINEAS.filter(l=>l.grupo===g).forEach(l=>{
+    const opt = document.createElement('option'); opt.value = l.id; opt.textContent = l.nombre;
+    og.appendChild(opt);
+  });
+  addLineSelect.appendChild(og);
+});
+addLineSelect.value = 'S33';
+
+function renderAddToggles(){
+  const line = lineaDe(addLineSelect.value);
+  const wrap = document.getElementById('addTogglesWrap');
+  const list = document.getElementById('addTogglesList');
+  list.innerHTML = '';
+  if (!line.toggles || line.toggles.length===0){ wrap.style.display='none'; addFormToggles={}; return; }
+  wrap.style.display='block';
+  line.toggles.forEach(key=>{
+    if (addFormToggles[key]===undefined) addFormToggles[key]=false;
+    const row = document.createElement('div'); row.className='toggle-row';
+    row.innerHTML = `<span>${TOGGLE_LABELS[key]||key}</span>`;
+    const sw = document.createElement('div');
+    sw.className = 'switch' + (addFormToggles[key]?' on':'');
+    sw.innerHTML = '<div class="dot"></div>';
+    sw.onclick = ()=>{ addFormToggles[key]=!addFormToggles[key]; renderAddToggles(); };
+    row.appendChild(sw);
+    list.appendChild(row);
+  });
+}
+function updateAddForm(){
+  const line = lineaDe(addLineSelect.value);
+  document.getElementById('addMNWrap').style.display = line.vars.includes('M') ? 'block' : 'none';
+  renderAddToggles();
+  const X = parseFloat(document.getElementById('addX').value)||0;
+  const Y = parseFloat(document.getElementById('addY').value)||0;
+  drawDiagram('diagramAdd', X, Y);
+}
+addLineSelect.addEventListener('change', ()=>{ addFormToggles={}; updateAddForm(); });
+document.getElementById('addX').addEventListener('input', updateAddForm);
+document.getElementById('addY').addEventListener('input', updateAddForm);
+
+document.getElementById('btnAgregar').addEventListener('click', ()=>{
+  const line = lineaDe(addLineSelect.value);
+  const X = parseFloat(document.getElementById('addX').value)||0;
+  const Y = parseFloat(document.getElementById('addY').value)||0;
+  const M = parseFloat(document.getElementById('addM').value)||0;
+  const N = parseFloat(document.getElementById('addN').value)||0;
+  const cantidad = Math.max(1, parseInt(document.getElementById('addCantidad').value)||1);
+  if (X<=0 || Y<=0) return;
+  proyecto.push({ id:nextId++, lineaId:line.id, toggles:{...addFormToggles}, X, Y, M, N, cantidad });
+  desbloqueado = false;
+  renderAll();
+});
+
+// ---------- Renderizado del proyecto (panel izquierdo) ----------
+function renderProyecto(){
+  const list = document.getElementById('proyectoList');
+  const totalUnidades = proyecto.reduce((a,it)=>a+it.cantidad,0);
+  document.getElementById('proyectoCount').textContent = proyecto.length + ' ítem' + (proyecto.length!==1?'s':'') + ' · ' + totalUnidades + ' unid.';
+  if (proyecto.length===0){
+    list.innerHTML = '<div class="empty">Aún no agregas ninguna ventana.</div>';
+    document.getElementById('btnPDF').disabled = true;
+    return;
+  }
+  document.getElementById('btnPDF').disabled = false;
+  list.innerHTML = '';
+  proyecto.forEach(item=>{
+    const line = lineaDe(item.lineaId);
+    const variantes = Object.keys(item.toggles||{}).filter(k=>item.toggles[k]).map(k=>TOGGLE_LABELS[k]||k).join(', ');
+    const row = document.createElement('div'); row.className='proyecto-item';
+    row.innerHTML = `
+      <div class="info">
+        <div class="l1">${line.nombre}</div>
+        <div class="l2">${item.X}×${item.Y} mm${variantes?' · '+variantes:''}</div>
+      </div>
+      <input type="number" class="qty-input" min="1" value="${item.cantidad}">
+      <div class="del">×</div>
+    `;
+    row.querySelector('.qty-input').addEventListener('input', (e)=>{
+      item.cantidad = Math.max(1, parseInt(e.target.value)||1);
+      desbloqueado = false;
+      renderAll();
+    });
+    row.querySelector('.del').addEventListener('click', ()=>{
+      proyecto = proyecto.filter(i=>i.id!==item.id);
+      desbloqueado = false;
+      renderAll();
+    });
+    list.appendChild(row);
+  });
+}
+
+// ---------- Renderizado de resultados (panel derecho) ----------
+function renderResultados(){
+  const wrap = document.getElementById('resultadoWrap');
+  const resumen = document.getElementById('resumenProyecto');
+  if (proyecto.length===0){
+    wrap.innerHTML = '<div class="empty">Agrega ventanas al proyecto para ver la pauta de corte consolidada.</div>';
+    resumen.textContent = '';
+    return;
+  }
+  const totalUnidades = proyecto.reduce((a,it)=>a+it.cantidad,0);
+  resumen.textContent = totalUnidades + ' ventanas totales';
+
+  if (planActual === 'gratis' && !desbloqueado){
+    mostrarGateAnuncio(wrap);
+    return;
+  }
+  renderResultadosContenido(wrap);
+}
+
+function mostrarGateAnuncio(wrap){
+  wrap.innerHTML = `
+    <div class="ad-gate">
+      <div class="ad-gate-badge">Plan Gratis</div>
+      <div class="ad-gate-icon">▶</div>
+      <h3>Tu pauta de corte está lista</h3>
+      <p>Mira un anuncio corto para desbloquear la pauta de corte y el optimizador de este proyecto. En el plan Pro esto es instantáneo, sin anuncios.</p>
+      <button class="btn secondary" id="btnVerAnuncio">▶ Ver anuncio y desbloquear</button>
+    </div>
+  `;
+  document.getElementById('btnVerAnuncio').addEventListener('click', reproducirAnuncioSimulado);
+}
+
+function reproducirAnuncioSimulado(){
+  const gate = document.querySelector('.ad-gate');
+  let seg = 5;
+  const total = seg;
+  gate.innerHTML = `
+    <div class="ad-gate-badge">Reproduciendo anuncio…</div>
+    <div class="ad-gate-icon">▶</div>
+    <h3>Anuncio en curso</h3>
+    <div class="ad-mock"><div class="ad-mock-bar" id="adBar"></div></div>
+    <p class="ad-countdown" id="adCountdown">${seg} segundos restantes</p>
+  `;
+  const bar = document.getElementById('adBar');
+  const countdownEl = document.getElementById('adCountdown');
+  const interval = setInterval(()=>{
+    seg -= 1;
+    bar.style.width = ((total-seg)/total*100) + '%';
+    if (seg <= 0){
+      clearInterval(interval);
+      countdownEl.textContent = 'Anuncio completado ✓ Desbloqueando…';
+      desbloqueado = true;
+      setTimeout(renderResultados, 500);
+    } else {
+      countdownEl.textContent = seg + ' segundos restantes';
+    }
+  }, 1000);
+}
+
+function renderResultadosContenido(wrap){
+  const consolidado = consolidarProyecto();
+  const perfilesOrdenados = [...consolidado.perfiles].sort((a,b)=> a.codigo.localeCompare(b.codigo) || b.largo-a.largo);
+  const vidriosAgrupados = agruparVidrios(consolidado.vidrios);
+  const largoBarra = parseFloat(document.getElementById('inputBarra').value) || 6000;
+  const kerf = parseFloat(document.getElementById('inputKerf').value) || 0;
+  const grupos = agruparPiezasPorCodigo(consolidado.perfiles);
+
+  wrap.innerHTML = '';
+
+  // Pauta de corte consolidada (sin fórmulas)
+  const t1 = document.createElement('div'); t1.className='section-title'; t1.textContent='Pauta de corte consolidada';
+  wrap.appendChild(t1);
+  const tabla1 = document.createElement('table'); tabla1.className='spec-table';
+  tabla1.innerHTML = '<thead><tr><th>Código</th><th>Cantidad</th><th>Largo</th><th>Ángulo</th></tr></thead>';
+  const tbody1 = document.createElement('tbody');
+  perfilesOrdenados.forEach(p=>{
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td><span class="codigo-pill">${p.codigo}</span></td><td class="num">${p.cantidad}</td><td class="num">${p.largo} mm</td><td class="mono">${p.corte||'—'}</td>`;
+    tbody1.appendChild(tr);
+  });
+  tabla1.appendChild(tbody1);
+  wrap.appendChild(tabla1);
+
+  // Vidrios / termopaneles
+  if (vidriosAgrupados.length){
+    const t2 = document.createElement('div'); t2.className='section-title'; t2.textContent='Vidrios y termopaneles';
+    wrap.appendChild(t2);
+    const tabla2 = document.createElement('table'); tabla2.className='spec-table';
+    tabla2.innerHTML = '<thead><tr><th>Tipo</th><th>Ancho</th><th>Alto</th><th>Cantidad</th></tr></thead>';
+    const tbody2 = document.createElement('tbody');
+    vidriosAgrupados.forEach(v=>{
+      const tr = document.createElement('tr');
+      tr.innerHTML = `<td>${v.tipo}</td><td class="num">${v.ancho} mm</td><td class="num">${v.alto} mm</td><td class="num">${v.cantidad}</td>`;
+      tbody2.appendChild(tr);
+    });
+    tabla2.appendChild(tbody2);
+    wrap.appendChild(tabla2);
+  }
+
+  // Optimizador de corte
+  const t3 = document.createElement('div'); t3.className='section-title'; t3.textContent='Optimizador de corte — proyecto completo';
+  wrap.appendChild(t3);
+
+  let totalBarras=0, totalDesperdicio=0, totalUsadoUtil=0, totalCapacidad=0, hayError=false;
+  const resultadosPorCodigo = {};
+  Object.keys(grupos).forEach(codigo=>{
+    const barras = optimizarBarras(grupos[codigo], largoBarra, kerf);
+    resultadosPorCodigo[codigo] = barras;
+    totalBarras += barras.length;
+    barras.forEach(b=>{ if(b.error) hayError=true; totalDesperdicio += (largoBarra-b.usado); totalCapacidad += largoBarra; });
+    totalUsadoUtil += grupos[codigo].reduce((a,b)=>a+b,0);
+  });
+  const aprovechamiento = totalCapacidad>0 ? (totalUsadoUtil/totalCapacidad*100) : 0;
+
+  const summary = document.createElement('div'); summary.className='opt-summary';
+  summary.innerHTML = `
+    <div class="opt-stat"><div class="num">${totalBarras}</div><div class="lbl">Barras totales</div></div>
+    <div class="opt-stat"><div class="num">${(totalUsadoUtil/1000).toFixed(1)} m</div><div class="lbl">Aluminio útil</div></div>
+    <div class="opt-stat"><div class="num">${(totalDesperdicio/1000).toFixed(1)} m</div><div class="lbl">Desperdicio</div></div>
+    <div class="opt-stat"><div class="num">${aprovechamiento.toFixed(1)}%</div><div class="lbl">Aprovechamiento</div></div>
+  `;
+  wrap.appendChild(summary);
+
+  if (hayError){
+    const box = document.createElement('div'); box.className='warn-box';
+    box.textContent = '⚠ Hay al menos una pieza más larga que la barra comercial elegida. Aumenta el largo de barra o revisa esa ventana.';
+    wrap.appendChild(box);
+  }
+
+  Object.keys(resultadosPorCodigo).forEach(codigo=>{
+    const barras = resultadosPorCodigo[codigo];
+    const group = document.createElement('div'); group.className='bar-group';
+    const desp = barras.reduce((a,b)=>a+(largoBarra-b.usado),0);
+    group.innerHTML = `<div class="bar-group-head">
+      <span class="codigo-pill">${codigo}</span>
+      <span class="meta">${barras.length} barra${barras.length!==1?'s':''} de ${largoBarra} mm · ${grupos[codigo].length} piezas · desperdicio ${desp.toFixed(0)} mm</span>
+    </div>`;
+    barras.forEach((barra,i)=>{
+      const row = document.createElement('div'); row.className='bar-row';
+      const label = document.createElement('div'); label.className='bar-label'; label.textContent='Barra '+(i+1);
+      row.appendChild(label);
+      const track = document.createElement('div'); track.className='bar-track';
+      barra.piezas.forEach(p=>{
+        const seg = document.createElement('div'); seg.className='bar-piece';
+        seg.style.width = (p/largoBarra*100)+'%'; seg.style.background = colorFor(p);
+        seg.title = p+' mm'; seg.textContent = p >= largoBarra*0.09 ? p+'' : '';
+        track.appendChild(seg);
+      });
+      const restante = largoBarra - barra.usado;
+      if (restante > 0.5){
+        const waste = document.createElement('div'); waste.className='bar-waste';
+        waste.style.width = (restante/largoBarra*100)+'%'; waste.title='Desperdicio: '+restante.toFixed(0)+' mm';
+        track.appendChild(waste);
+      }
+      row.appendChild(track);
+      const wlabel = document.createElement('div'); wlabel.className='bar-waste-label';
+      wlabel.textContent = restante.toFixed(0)+' mm sobrante';
+      row.appendChild(wlabel);
+      group.appendChild(row);
+    });
+    wrap.appendChild(group);
+  });
+
+  // ---------- Precios y presupuesto ----------
+  const t4 = document.createElement('div'); t4.className='section-title'; t4.textContent='Precios y presupuesto';
+  wrap.appendChild(t4);
+
+  const preciosBox = document.createElement('div');
+  const kerfActual = parseFloat(document.getElementById('inputKerf').value) || 0;
+
+  let inputsHTML = `<div class="price-subhead">Perfiles — precio por barra de ${largoBarra} mm</div>`;
+  perfilesOrdenados
+    .map(p=>p.codigo)
+    .filter((c,i,arr)=>arr.indexOf(c)===i)
+    .forEach(codigo=>{
+      inputsHTML += `<div class="price-row">
+        <div class="price-label"><span class="codigo-pill">${codigo}</span></div>
+        <div class="price-input-wrap"><span>$</span><input type="number" min="0" step="100" class="precio-perfil" data-codigo="${codigo}" value="${precios.perfiles[codigo]||''}"></div>
+      </div>`;
+    });
+
+  const tiposVidrio = [...new Set(vidriosAgrupados.map(v=>v.tipo))];
+  if (tiposVidrio.length){
+    inputsHTML += `<div class="price-subhead">Vidrios y termopaneles — precio por m²</div>`;
+    tiposVidrio.forEach(tipo=>{
+      inputsHTML += `<div class="price-row">
+        <div class="price-label">${tipo}</div>
+        <div class="price-input-wrap"><span>$</span><input type="number" min="0" step="500" class="precio-vidrio" data-tipo="${tipo}" value="${precios.vidrio[tipo]||''}"></div>
+      </div>`;
+    });
+  }
+
+  inputsHTML += `<div class="price-subhead">Costos por ventana</div>
+    <div class="price-row"><div class="price-label">Mano de obra</div><div class="price-input-wrap"><span>$</span><input type="number" min="0" step="500" id="precioManoObra" value="${precios.manoObra||''}"></div></div>
+    <div class="price-row"><div class="price-label">Accesorios / herrajes</div><div class="price-input-wrap"><span>$</span><input type="number" min="0" step="500" id="precioAccesorios" value="${precios.accesorios||''}"></div></div>
+    <div class="price-subhead">Margen, descuento e IVA</div>
+    <div class="price-row"><div class="price-label">Margen de utilidad</div><div class="price-input-wrap"><span>%</span><input type="number" min="0" step="1" id="precioMargen" value="${precios.margen}"></div></div>
+    <div class="price-row"><div class="price-label">Descuento</div><div class="price-input-wrap"><span>%</span><input type="number" min="0" max="100" step="1" id="precioDescuento" value="${precios.descuento||0}"></div></div>
+    <div class="price-row"><div class="price-label">IVA</div><div class="price-input-wrap"><span>%</span><input type="number" min="0" step="1" id="precioIVA" value="${precios.iva}"></div></div>`;
+
+  preciosBox.innerHTML = inputsHTML;
+  wrap.appendChild(preciosBox);
+
+  const presupuestoOutput = document.createElement('div');
+  presupuestoOutput.id = 'presupuestoOutput';
+  wrap.appendChild(presupuestoOutput);
+
+  function actualizarPresupuesto(){
+    document.querySelectorAll('.precio-perfil').forEach(inp=>{ precios.perfiles[inp.dataset.codigo] = parseFloat(inp.value)||0; });
+    document.querySelectorAll('.precio-vidrio').forEach(inp=>{ precios.vidrio[inp.dataset.tipo] = parseFloat(inp.value)||0; });
+    precios.manoObra = parseFloat(document.getElementById('precioManoObra').value)||0;
+    precios.accesorios = parseFloat(document.getElementById('precioAccesorios').value)||0;
+    precios.margen = parseFloat(document.getElementById('precioMargen').value)||0;
+    precios.descuento = parseFloat(document.getElementById('precioDescuento').value)||0;
+    precios.iva = parseFloat(document.getElementById('precioIVA').value)||0;
+
+    // Factor de ajuste por perfil: reparte el costo REAL de barras (con desperdicio incluido)
+    // proporcionalmente entre las ventanas, según cuántos metros de ese perfil usa cada una.
+    const factores = {}, preciosPorMetro = {};
+    Object.keys(grupos).forEach(codigo=>{
+      const barras = optimizarBarras(grupos[codigo], largoBarra, kerfActual);
+      const precioBarra = precios.perfiles[codigo]||0;
+      const realCosto = barras.length * precioBarra;
+      const totalLinealM = grupos[codigo].reduce((a,b)=>a+b,0)/1000;
+      const precioMetro = precioBarra / (largoBarra/1000);
+      const costoLinealTeorico = totalLinealM * precioMetro;
+      preciosPorMetro[codigo] = precioMetro;
+      factores[codigo] = costoLinealTeorico>0 ? realCosto/costoLinealTeorico : 1;
+    });
+
+    function costoUnitarioItem(item){
+      let costoPerfiles = 0;
+      calcularItemPerfiles(item).forEach(p=>{
+        costoPerfiles += (p.largo/1000) * p.cantidad * (preciosPorMetro[p.codigo]||0) * (factores[p.codigo]||1);
+      });
+      let costoVidrio = 0;
+      calcularItemVidrio(item).forEach(v=>{
+        const m2 = (v.ancho/1000)*(v.alto/1000)*v.cantidad;
+        costoVidrio += m2 * (precios.vidrio[v.tipo]||0);
+      });
+      return costoPerfiles + costoVidrio + precios.manoObra + precios.accesorios;
+    }
+
+    let sumaNeta = 0, costoTotalSinMargen = 0;
+    const filas = proyecto.map(item=>{
+      const line = lineaDe(item.lineaId);
+      const costoUnit = costoUnitarioItem(item);
+      const precioUnit = costoUnit * (1 + precios.margen/100);
+      const totalItem = precioUnit * item.cantidad;
+      sumaNeta += totalItem;
+      costoTotalSinMargen += costoUnit * item.cantidad;
+      return `<tr><td>${line.nombre}</td><td class="num">${item.X}×${item.Y}</td><td class="num">${item.cantidad}</td><td class="num">${clp(precioUnit)}</td><td class="num">${clp(totalItem)}</td></tr>`;
+    }).join('');
+
+    const montoDescuento = sumaNeta * (precios.descuento/100);
+    const netoConDescuento = sumaNeta - montoDescuento;
+    const montoIVA = netoConDescuento * (precios.iva/100);
+    const totalConIVA = netoConDescuento + montoIVA;
+
+    presupuestoOutput.innerHTML = `
+      <table class="spec-table">
+        <thead><tr><th>Ventana</th><th>Medidas</th><th>Cant.</th><th>Precio unit.</th><th>Total</th></tr></thead>
+        <tbody>${filas}</tbody>
+      </table>
+      <div class="presupuesto-box">
+        <div class="presupuesto-line sub"><span>Costo de producción estimado (sin margen)</span><span>${clp(costoTotalSinMargen)}</span></div>
+        <div class="presupuesto-line"><span>Suma total neta</span><span>${clp(sumaNeta)}</span></div>
+        <div class="presupuesto-line sub"><span>Descuento (${precios.descuento}%)</span><span>-${clp(montoDescuento)}</span></div>
+        <div class="presupuesto-line sub"><span>Neto con descuento</span><span>${clp(netoConDescuento)}</span></div>
+        <div class="presupuesto-line sub"><span>IVA (${precios.iva}%)</span><span>${clp(montoIVA)}</span></div>
+        <div class="presupuesto-line total"><span>Total con IVA</span><span>${clp(totalConIVA)}</span></div>
+      </div>
+    `;
+  }
+
+  preciosBox.querySelectorAll('input').forEach(inp=> inp.addEventListener('input', actualizarPresupuesto));
+  actualizarPresupuesto();
+
+  const foot = document.createElement('div'); foot.className='footnote';
+  foot.textContent = 'Los valores se calculan automáticamente a partir de las pautas técnicas del fabricante. Los precios que ingreses aquí son solo tuyos — no se comparten ni se guardan fuera de esta sesión en esta demo.';
+  wrap.appendChild(foot);
+}
+
+function renderAll(){ renderProyecto(); renderResultados(); }
+
+// ---------- Exportar PDF ----------
+document.getElementById('btnPDF').addEventListener('click', ()=>{
+  if (proyecto.length===0) return;
+  if (planActual==='gratis' && !desbloqueado){
+    document.getElementById('resultadoWrap').scrollIntoView({behavior:'smooth'});
+    return;
+  }
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({unit:'mm', format:'a4'});
+  const consolidado = consolidarProyecto();
+  const vidriosAgrupados = agruparVidrios(consolidado.vidrios);
+  const grupos = agruparPiezasPorCodigo(consolidado.perfiles);
+  const largoBarra = parseFloat(document.getElementById('inputBarra').value)||6000;
+  const kerf = parseFloat(document.getElementById('inputKerf').value)||0;
+
+  let y = 18;
+  const empresa = document.getElementById('datEmpresa').value.trim();
+  const cliente = document.getElementById('datCliente').value.trim();
+  const obra = document.getElementById('datObra').value.trim();
+
+  doc.setFont('helvetica','bold'); doc.setFontSize(16); doc.setTextColor(20,23,26);
+  doc.text(empresa || 'Pauta de Corte y Presupuesto', 14, y);
+  doc.setFont('helvetica','normal'); doc.setFontSize(9); doc.setTextColor(91,97,104);
+  y+=6;
+  doc.text('Generado con haceventanas.com · ' + new Date().toLocaleDateString('es-CL'), 14, y);
+  y+=8;
+
+  if (cliente || obra){
+    doc.setDrawColor(217,220,221);
+    doc.rect(14, y, 182, cliente && obra ? 14 : 8);
+    doc.setFontSize(9); doc.setTextColor(20,23,26);
+    let yy = y+6;
+    if (cliente){ doc.text('Cliente: ' + cliente, 18, yy); yy+=6; }
+    if (obra){ doc.text('Obra: ' + obra, 18, yy); }
+    y += (cliente && obra ? 14 : 8) + 8;
+  }
+
+  doc.setFont('helvetica','bold'); doc.setFontSize(12); doc.setTextColor(20,23,26);
+  doc.text('Ventanas del proyecto', 14, y); y+=1;
+
+  doc.autoTable({
+    startY:y,
+    head:[['#','Línea','Medidas (mm)','Variantes','Cant.']],
+    body: proyecto.map((it,i)=>{
+      const line = lineaDe(it.lineaId);
+      const variantes = Object.keys(it.toggles||{}).filter(k=>it.toggles[k]).map(k=>TOGGLE_LABELS[k]||k).join(', ') || '—';
+      let medidas = it.X+' × '+it.Y;
+      if (line.vars.includes('M')) medidas += ' (M='+it.M+', N='+it.N+')';
+      return [i+1, line.nombre, medidas, variantes, it.cantidad];
+    }),
+    styles:{fontSize:8.5}, headStyles:{fillColor:[29,78,137], textColor:255}, margin:{left:14,right:14},
+  });
+  y = doc.lastAutoTable.finalY + 10;
+
+  doc.setFont('helvetica','bold'); doc.setFontSize(11); doc.setTextColor(20,23,26);
+  doc.text('Pauta de corte consolidada', 14, y); y+=4;
+  doc.autoTable({
+    startY:y,
+    head:[['Código','Cantidad','Largo (mm)']],
+    body: [...consolidado.perfiles].sort((a,b)=> a.codigo.localeCompare(b.codigo) || b.largo-a.largo).map(p=>[p.codigo,p.cantidad,p.largo]),
+    styles:{fontSize:8.5}, headStyles:{fillColor:[29,78,137], textColor:255}, margin:{left:14,right:14},
+  });
+  y = doc.lastAutoTable.finalY + 10;
+
+  if (vidriosAgrupados.length){
+    if (y > 250){ doc.addPage(); y=18; }
+    doc.setFont('helvetica','bold'); doc.setFontSize(11);
+    doc.text('Vidrios y termopaneles', 14, y); y+=4;
+    doc.autoTable({
+      startY:y,
+      head:[['Tipo','Ancho (mm)','Alto (mm)','Cantidad']],
+      body: vidriosAgrupados.map(v=>[v.tipo,v.ancho,v.alto,v.cantidad]),
+      styles:{fontSize:8.5}, headStyles:{fillColor:[29,78,137], textColor:255}, margin:{left:14,right:14},
+    });
+    y = doc.lastAutoTable.finalY + 10;
+  }
+
+  Object.keys(grupos).forEach(codigo=>{
+    if (y > 255){ doc.addPage(); y=18; }
+    const barras = optimizarBarras(grupos[codigo], largoBarra, kerf);
+    doc.setFont('helvetica','bold'); doc.setFontSize(11);
+    doc.text('Perfil ' + codigo + ' — ' + barras.length + ' barra(s) de ' + largoBarra + ' mm', 14, y);
+    y+=4;
+    doc.autoTable({
+      startY:y,
+      head:[['Barra','Piezas (mm)','Sobrante (mm)']],
+      body: barras.map((b,i)=>[i+1, b.piezas.join(' + '), (largoBarra-b.usado).toFixed(0)]),
+      styles:{fontSize:8}, headStyles:{fillColor:[225,96,28], textColor:255}, margin:{left:14,right:14},
+    });
+    y = doc.lastAutoTable.finalY + 8;
+  });
+
+  // Presupuesto itemizado por ventana (reparte el costo real de barras según uso de cada una)
+  const factoresPDF = {}, preciosPorMetroPDF = {};
+  Object.keys(grupos).forEach(codigo=>{
+    const barras = optimizarBarras(grupos[codigo], largoBarra, kerf);
+    const precioBarra = precios.perfiles[codigo]||0;
+    const realCosto = barras.length * precioBarra;
+    const totalLinealM = grupos[codigo].reduce((a,b)=>a+b,0)/1000;
+    const precioMetro = precioBarra / (largoBarra/1000);
+    preciosPorMetroPDF[codigo] = precioMetro;
+    const costoLinealTeorico = totalLinealM * precioMetro;
+    factoresPDF[codigo] = costoLinealTeorico>0 ? realCosto/costoLinealTeorico : 1;
+  });
+  function costoUnitPDF(item){
+    let cp = 0;
+    calcularItemPerfiles(item).forEach(p=>{ cp += (p.largo/1000)*p.cantidad*(preciosPorMetroPDF[p.codigo]||0)*(factoresPDF[p.codigo]||1); });
+    let cv = 0;
+    calcularItemVidrio(item).forEach(v=>{ cv += (v.ancho/1000)*(v.alto/1000)*v.cantidad*(precios.vidrio[v.tipo]||0); });
+    return cp + cv + (precios.manoObra||0) + (precios.accesorios||0);
+  }
+  let sumaNetaPDF = 0;
+  const filasPDF = proyecto.map(item=>{
+    const line = lineaDe(item.lineaId);
+    const precioUnit = costoUnitPDF(item) * (1+(precios.margen||0)/100);
+    const totalItem = precioUnit * item.cantidad;
+    sumaNetaPDF += totalItem;
+    return [line.nombre, item.X+' × '+item.Y, item.cantidad, '$'+Math.round(precioUnit).toLocaleString('es-CL'), '$'+Math.round(totalItem).toLocaleString('es-CL')];
+  });
+
+  if (sumaNetaPDF > 0){
+    const montoDto = sumaNetaPDF * ((precios.descuento||0)/100);
+    const netoDto = sumaNetaPDF - montoDto;
+    const montoIVA = netoDto * ((precios.iva||0)/100);
+    const totalIVA = netoDto + montoIVA;
+    if (y > 220){ doc.addPage(); y=18; }
+    doc.setFont('helvetica','bold'); doc.setFontSize(12); doc.setTextColor(20,23,26);
+    doc.text('Presupuesto', 14, y); y+=4;
+    doc.autoTable({
+      startY:y,
+      head:[['Ventana','Medidas (mm)','Cant.','Precio unit.','Total']],
+      body: filasPDF,
+      styles:{fontSize:8.5}, headStyles:{fillColor:[29,78,137], textColor:255}, margin:{left:14,right:14},
+    });
+    y = doc.lastAutoTable.finalY + 8;
+    doc.autoTable({
+      startY:y,
+      body:[
+        ['Suma total neta', '$'+Math.round(sumaNetaPDF).toLocaleString('es-CL')],
+        ['Descuento ('+(precios.descuento||0)+'%)', '-$'+Math.round(montoDto).toLocaleString('es-CL')],
+        ['Neto con descuento', '$'+Math.round(netoDto).toLocaleString('es-CL')],
+        ['IVA ('+(precios.iva||0)+'%)', '$'+Math.round(montoIVA).toLocaleString('es-CL')],
+        ['TOTAL CON IVA', '$'+Math.round(totalIVA).toLocaleString('es-CL')],
+      ],
+      theme:'plain',
+      styles:{fontSize:9.5},
+      columnStyles:{0:{cellWidth:90},1:{cellWidth:60, halign:'right'}},
+      margin:{left:14,right:14},
+      didParseCell:(data)=>{ if (data.row.index===4){ data.cell.styles.fontStyle='bold'; data.cell.styles.textColor=[225,96,28]; data.cell.styles.fontSize=11; } }
+    });
+    y = doc.lastAutoTable.finalY + 8;
+  }
+
+  doc.save('pauta-de-corte-proyecto.pdf');
+});
+
+document.getElementById('inputBarra').addEventListener('input', renderResultados);
+document.getElementById('inputKerf').addEventListener('input', renderResultados);
+document.querySelectorAll('.plan-btn').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    document.querySelectorAll('.plan-btn').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    planActual = btn.dataset.plan;
+    renderResultados();
+  });
+});
+
+updateAddForm();
+renderAll();
+</script>
+</body>
+</html>
