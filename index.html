@@ -242,27 +242,7 @@
   <p>Arma el proyecto completo de una casa: agrega cada ventana con su línea y medidas, y el sistema consolida y optimiza el corte de todas juntas. Descarga la pauta lista para el taller en PDF.</p>
 </header>
 
-<div class="gate-wrap" id="appGate">
-  <div class="gate-card">
-    <div class="brand"><div class="mark">HV</div><h1>Accede a tu cuenta</h1></div>
-    <p class="gate-sub">Crea tu cuenta gratis o inicia sesión para usar la calculadora de pauta de corte y presupuestos.</p>
-    <div class="gate-toggle">
-      <button id="gateTabLogin" class="active">Iniciar sesión</button>
-      <button id="gateTabSignup">Crear cuenta</button>
-    </div>
-    <div class="field"><label>Email</label><input type="email" id="gateEmail" placeholder="tu@correo.com"></div>
-    <div class="field"><label>Contraseña</label><input type="password" id="gatePass" placeholder="Mínimo 6 caracteres"></div>
-    <div id="gateSignupFields" style="display:none;">
-      <div class="field"><label>Empresa</label><input type="text" id="gateEmpresa" placeholder="Nombre de tu empresa"></div>
-      <div class="field"><label>Teléfono</label><input type="text" id="gateTelefono" placeholder="+56 9 ..."></div>
-      <div class="field"><label>Dirección</label><input type="text" id="gateDireccion" placeholder="Opcional"></div>
-    </div>
-    <button class="btn" id="gateSubmit">Iniciar sesión</button>
-    <div class="auth-error" id="gateError"></div>
-  </div>
-</div>
-
-<main id="appMain" style="display:none;">
+<main id="appMain">
   <div class="left-col">
 
     <div class="panel">
@@ -915,86 +895,87 @@ let sbUser = null;
 async function refrescarSesion(){
   const { data } = await sbClient.auth.getSession();
   sbUser = data.session ? data.session.user : null;
-  const gate = document.getElementById('appGate');
-  const app = document.getElementById('appMain');
   if (sbUser){
     const { data: perfil } = await sbClient.from('profiles').select('plan, empresa').eq('id', sbUser.id).single();
     planActual = (perfil && perfil.plan) || 'gratis';
     if (perfil && perfil.empresa && !document.getElementById('datEmpresa').value){
       document.getElementById('datEmpresa').value = perfil.empresa;
     }
-    gate.style.display = 'none';
-    app.style.display = 'grid';
   } else {
     planActual = 'gratis';
-    gate.style.display = 'flex';
-    app.style.display = 'none';
-    return;
   }
   renderAuthUI();
   renderListaProyectosGuardados();
   renderResultados();
 }
 
+let authModo = 'login';
+
 function renderAuthUI(){
   const body = document.getElementById('authBody');
   const badge = document.getElementById('planBadgeHead');
   badge.textContent = planActual === 'pro' ? 'Pro' : 'Gratis';
+
+  if (sbUser){
+    body.innerHTML = `
+      <div class="auth-user">
+        <span class="email">${sbUser.email}</span>
+        <span class="plan-badge">${planActual === 'pro' ? 'PRO' : 'GRATIS'}</span>
+      </div>
+      <button class="btn" id="btnLogout" style="margin-top:8px;">Cerrar sesión</button>
+    `;
+    document.getElementById('btnLogout').addEventListener('click', async ()=>{
+      await sbClient.auth.signOut();
+      refrescarSesion();
+    });
+    return;
+  }
+
   body.innerHTML = `
-    <div class="auth-user">
-      <span class="email">${sbUser.email}</span>
-      <span class="plan-badge">${planActual === 'pro' ? 'PRO' : 'GRATIS'}</span>
+    <p class="gate-sub" style="margin-top:0;">Puedes usar la calculadora sin cuenta. Crea una gratis solo si quieres guardar tus proyectos.</p>
+    <div class="gate-toggle">
+      <button id="authTabLogin" class="${authModo==='login'?'active':''}">Iniciar sesión</button>
+      <button id="authTabSignup" class="${authModo==='signup'?'active':''}">Crear cuenta</button>
     </div>
-    <button class="btn" id="btnLogout" style="margin-top:8px;">Cerrar sesión</button>
+    <div class="field"><label>Email</label><input type="email" id="authEmail" placeholder="tu@correo.com"></div>
+    <div class="field"><label>Contraseña</label><input type="password" id="authPass" placeholder="Mínimo 6 caracteres"></div>
+    <div id="authSignupFields" style="display:${authModo==='signup'?'block':'none'};">
+      <div class="field"><label>Empresa</label><input type="text" id="authEmpresa" placeholder="Nombre de tu empresa"></div>
+      <div class="field"><label>Teléfono</label><input type="text" id="authTelefono" placeholder="+56 9 ..."></div>
+      <div class="field"><label>Dirección</label><input type="text" id="authDireccion" placeholder="Opcional"></div>
+    </div>
+    <button class="btn" id="authSubmit">${authModo==='signup'?'Crear cuenta gratis':'Iniciar sesión'}</button>
+    <div class="auth-error" id="authError"></div>
   `;
-  document.getElementById('btnLogout').addEventListener('click', async ()=>{
-    await sbClient.auth.signOut();
-    refrescarSesion();
+
+  document.getElementById('authTabLogin').addEventListener('click', ()=>{ authModo='login'; renderAuthUI(); });
+  document.getElementById('authTabSignup').addEventListener('click', ()=>{ authModo='signup'; renderAuthUI(); });
+
+  document.getElementById('authSubmit').addEventListener('click', async ()=>{
+    const email = document.getElementById('authEmail').value.trim();
+    const password = document.getElementById('authPass').value;
+    const errorEl = document.getElementById('authError');
+    errorEl.style.color = 'var(--orange)';
+    errorEl.textContent = '';
+    if (!email || !password){ errorEl.textContent = 'Completa email y contraseña.'; return; }
+    if (authModo === 'login'){
+      const { error } = await sbClient.auth.signInWithPassword({ email, password });
+      if (error){ errorEl.textContent = error.message; return; }
+      refrescarSesion();
+    } else {
+      const empresa = document.getElementById('authEmpresa').value.trim();
+      const telefono = document.getElementById('authTelefono').value.trim();
+      const direccion = document.getElementById('authDireccion').value.trim();
+      const { error } = await sbClient.auth.signUp({
+        email, password,
+        options: { data: { empresa, telefono, direccion } }
+      });
+      if (error){ errorEl.textContent = error.message; return; }
+      errorEl.style.color = 'var(--blue)';
+      errorEl.textContent = 'Cuenta creada. Revisa tu correo para confirmarla y luego inicia sesión.';
+    }
   });
 }
-
-// ---- Pantalla de acceso (gate) ----
-let gateModo = 'login';
-document.getElementById('gateTabLogin').addEventListener('click', ()=>{
-  gateModo = 'login';
-  document.getElementById('gateTabLogin').classList.add('active');
-  document.getElementById('gateTabSignup').classList.remove('active');
-  document.getElementById('gateSignupFields').style.display = 'none';
-  document.getElementById('gateSubmit').textContent = 'Iniciar sesión';
-  document.getElementById('gateError').textContent = '';
-});
-document.getElementById('gateTabSignup').addEventListener('click', ()=>{
-  gateModo = 'signup';
-  document.getElementById('gateTabSignup').classList.add('active');
-  document.getElementById('gateTabLogin').classList.remove('active');
-  document.getElementById('gateSignupFields').style.display = 'block';
-  document.getElementById('gateSubmit').textContent = 'Crear cuenta gratis';
-  document.getElementById('gateError').textContent = '';
-});
-document.getElementById('gateSubmit').addEventListener('click', async ()=>{
-  const email = document.getElementById('gateEmail').value.trim();
-  const password = document.getElementById('gatePass').value;
-  const errorEl = document.getElementById('gateError');
-  errorEl.style.color = 'var(--orange)';
-  errorEl.textContent = '';
-  if (!email || !password){ errorEl.textContent = 'Completa email y contraseña.'; return; }
-  if (gateModo === 'login'){
-    const { error } = await sbClient.auth.signInWithPassword({ email, password });
-    if (error){ errorEl.textContent = error.message; return; }
-    refrescarSesion();
-  } else {
-    const empresa = document.getElementById('gateEmpresa').value.trim();
-    const telefono = document.getElementById('gateTelefono').value.trim();
-    const direccion = document.getElementById('gateDireccion').value.trim();
-    const { error } = await sbClient.auth.signUp({
-      email, password,
-      options: { data: { empresa, telefono, direccion } }
-    });
-    if (error){ errorEl.textContent = error.message; return; }
-    errorEl.style.color = 'var(--blue)';
-    errorEl.textContent = 'Cuenta creada. Revisa tu correo para confirmarla y luego inicia sesión.';
-  }
-});
 
 async function guardarProyectoDB(){
   if (!sbUser){ alert('Inicia sesión primero para guardar tu proyecto.'); return; }
@@ -1622,5 +1603,9 @@ updateAddForm();
 renderAll();
 refrescarSesion();
 </script>
+<script>
+  window.va = window.va || function () { (window.vaq = window.vaq || []).push(arguments); };
+</script>
+<script defer src="/_vercel/insights/script.js"></script>
 </body>
 </html>
