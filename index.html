@@ -221,6 +221,15 @@
   .saved-item button{border:1px solid var(--line); background:#fff; font-size:11px; padding:5px 8px; cursor:pointer; font-family:var(--sans);}
   .saved-item button:hover{border-color:var(--blue); color:var(--blue);}
   .saved-item button.del:hover{border-color:var(--orange); color:var(--orange);}
+
+  .gate-wrap{display:flex; justify-content:center; align-items:flex-start; padding:60px 20px 90px;}
+  .gate-card{background:var(--panel); border:1px solid var(--line); padding:36px 34px; max-width:380px; width:100%;}
+  .gate-card .brand{margin-bottom:6px;}
+  .gate-card .brand h1{font-size:17px;}
+  .gate-sub{color:var(--ink-soft); font-size:13px; line-height:1.55; margin:10px 0 22px;}
+  .gate-toggle{display:flex; gap:6px; margin-bottom:18px;}
+  .gate-toggle button{flex:1; padding:8px; border:1px solid var(--line); background:#fff; font-family:var(--mono); font-size:11px; text-transform:uppercase; cursor:pointer; color:var(--ink-soft);}
+  .gate-toggle button.active{background:var(--ink); color:#fff; border-color:var(--ink);}
 </style>
 </head>
 <body>
@@ -233,7 +242,27 @@
   <p>Arma el proyecto completo de una casa: agrega cada ventana con su línea y medidas, y el sistema consolida y optimiza el corte de todas juntas. Descarga la pauta lista para el taller en PDF.</p>
 </header>
 
-<main>
+<div class="gate-wrap" id="appGate">
+  <div class="gate-card">
+    <div class="brand"><div class="mark">HV</div><h1>Accede a tu cuenta</h1></div>
+    <p class="gate-sub">Crea tu cuenta gratis o inicia sesión para usar la calculadora de pauta de corte y presupuestos.</p>
+    <div class="gate-toggle">
+      <button id="gateTabLogin" class="active">Iniciar sesión</button>
+      <button id="gateTabSignup">Crear cuenta</button>
+    </div>
+    <div class="field"><label>Email</label><input type="email" id="gateEmail" placeholder="tu@correo.com"></div>
+    <div class="field"><label>Contraseña</label><input type="password" id="gatePass" placeholder="Mínimo 6 caracteres"></div>
+    <div id="gateSignupFields" style="display:none;">
+      <div class="field"><label>Empresa</label><input type="text" id="gateEmpresa" placeholder="Nombre de tu empresa"></div>
+      <div class="field"><label>Teléfono</label><input type="text" id="gateTelefono" placeholder="+56 9 ..."></div>
+      <div class="field"><label>Dirección</label><input type="text" id="gateDireccion" placeholder="Opcional"></div>
+    </div>
+    <button class="btn" id="gateSubmit">Iniciar sesión</button>
+    <div class="auth-error" id="gateError"></div>
+  </div>
+</div>
+
+<main id="appMain" style="display:none;">
   <div class="left-col">
 
     <div class="panel">
@@ -270,6 +299,13 @@
             <div class="dim-field"><input type="number" id="addM" value="2" min="0"><span class="unit">M</span></div>
             <div class="dim-field"><input type="number" id="addN" value="4" min="0"><span class="unit">N</span></div>
           </div>
+        </div>
+        <div class="field" id="addAWrap" style="display:none;">
+          <label>Ancho de la hoja angosta (mm)</label>
+          <div class="dim-row">
+            <div class="dim-field"><input type="number" id="addA" value="500" min="1"><span class="unit">A</span></div>
+          </div>
+          <div class="note" style="margin-top:8px;">El ancho de la hoja ancha se calcula automáticamente (ancho total − A).</div>
         </div>
         <div class="field" id="addTogglesWrap" style="display:none;">
           <label>Variantes</label>
@@ -484,6 +520,260 @@ const LINEAS = [
     ],
     vidrio:[{cantidad:"8", ancho:"X/8-8", alto:"Y-86"}],
   },
+  { id:"WH_S75_2h_80", grupo:"PVC — WinHouse S75", nombre:"Doble Riel — 2 hojas simétrica (hoja 80mm)", vars:["X","Y"],
+    perfiles:[
+      {codigo:"Marco doble riel corredera S75", cantidad:"2", largo:"X+5", corte:"45/45"},
+      {codigo:"Marco doble riel corredera S75", cantidad:"2", largo:"Y+5", corte:"45/45"},
+      {codigo:"Refuerzo marco corredera S75 1,2mm", cantidad:"2", largo:"X-80", corte:"90/90"},
+      {codigo:"Refuerzo marco corredera S75 1,2mm", cantidad:"2", largo:"Y-80", corte:"90/90"},
+      {codigo:"Hoja corredera 80", cantidad:"4", largo:"(X-80)/2+45", corte:"45/45"},
+      {codigo:"Hoja corredera 80", cantidad:"4", largo:"Y-75", corte:"45/45"},
+      {codigo:"Ref. New Multiple 1,2", cantidad:"4", largo:"(X-80)/2-104", corte:"90/90"},
+      {codigo:"Ref. New Multiple 1,2", cantidad:"4", largo:"Y-224", corte:"90/90"},
+      {codigo:"Refuerzo contraflecha", cantidad:"2", largo:"Y-224", corte:"90/90", condicion:"Y+5>=2300"},
+      {codigo:"Traslapo S75 corredera 80", cantidad:"2", largo:"Y-82", corte:"90/90"},
+      {codigo:"Riel de aluminio Winhouse", cantidad:"2", largo:"X-97", corte:"45/45"},
+      {codigo:"Junquillo termopanel 18-20mm", cantidad:"4", largo:"(X-80)/2-84", corte:"45/45"},
+      {codigo:"Junquillo termopanel 18-20mm", cantidad:"4", largo:"Y-204", corte:"45/45"},
+    ],
+    termopanel:[{cantidad:"2", ancho:"(X-80)/2-92", alto:"Y-212"}],
+    nota:"Fórmulas extraídas y verificadas desde la plantilla de cálculo oficial WinHouse S75 (PVC).",
+  },
+  { id:"WH_S75_2h_98", grupo:"PVC — WinHouse S75", nombre:"Doble Riel — 2 hojas simétrica (hoja 98mm)", vars:["X","Y"],
+    perfiles:[
+      {codigo:"Marco doble riel corredera S75", cantidad:"2", largo:"X+5", corte:"45/45"},
+      {codigo:"Marco doble riel corredera S75", cantidad:"2", largo:"Y+5", corte:"45/45"},
+      {codigo:"Refuerzo marco corredera S75 1,2mm", cantidad:"2", largo:"X-80", corte:"90/90"},
+      {codigo:"Refuerzo marco corredera S75 1,2mm", cantidad:"2", largo:"Y-80", corte:"90/90"},
+      {codigo:"Hoja corredera 98", cantidad:"4", largo:"(X-80)/2+54", corte:"45/45"},
+      {codigo:"Hoja corredera 98", cantidad:"4", largo:"Y-75", corte:"45/45"},
+      {codigo:"Refuerzo hoja corredera 98 2mm", cantidad:"4", largo:"(X-80)/2-131", corte:"90/90"},
+      {codigo:"Refuerzo hoja corredera 98 2mm", cantidad:"4", largo:"Y-260", corte:"90/90"},
+      {codigo:"Refuerzo contraflecha", cantidad:"2", largo:"Y-260", corte:"90/90", condicion:"Y+5>=2300"},
+      {codigo:"Traslapo S75 corredera 98", cantidad:"2", largo:"Y-82", corte:"90/90"},
+      {codigo:"Riel de aluminio Winhouse", cantidad:"2", largo:"X-97", corte:"45/45"},
+      {codigo:"Junquillo termopanel 18-20mm", cantidad:"4", largo:"(X-80)/2-111", corte:"45/45"},
+      {codigo:"Junquillo termopanel 18-20mm", cantidad:"4", largo:"Y-240", corte:"45/45"},
+    ],
+    termopanel:[{cantidad:"2", ancho:"(X-80)/2-119", alto:"Y-248"}],
+    nota:"Fórmulas extraídas y verificadas desde la plantilla de cálculo oficial WinHouse S75 (PVC).",
+  },
+  { id:"WH_S75_3riel_80", grupo:"PVC — WinHouse S75", nombre:"Riel Triple — 3 hojas simétrica (hoja 80mm)", vars:["X","Y"],
+    perfiles:[
+      {codigo:"Marco triple riel S75", cantidad:"2", largo:"X+5", corte:"45/45"},
+      {codigo:"Marco triple riel S75", cantidad:"2", largo:"Y+5", corte:"45/45"},
+      {codigo:"Refuerzo marco corredera S75 1,2mm", cantidad:"4", largo:"X-80", corte:"90/90"},
+      {codigo:"Refuerzo marco corredera S75 1,2mm", cantidad:"4", largo:"Y-80", corte:"90/90"},
+      {codigo:"Hoja corredera 80", cantidad:"6", largo:"(X-80)/3+58.3", corte:"45/45"},
+      {codigo:"Hoja corredera 80", cantidad:"6", largo:"Y-75", corte:"45/45"},
+      {codigo:"Ref. New Multiple 1,2", cantidad:"6", largo:"(X-80)/3-90.7", corte:"90/90"},
+      {codigo:"Ref. New Multiple 1,2", cantidad:"6", largo:"Y-224", corte:"90/90"},
+      {codigo:"Refuerzo contraflecha", cantidad:"4", largo:"Y-224", corte:"90/90", condicion:"Y+5>=2300"},
+      {codigo:"Traslapo S75 corredera 80", cantidad:"4", largo:"Y-82", corte:"90/90"},
+      {codigo:"Riel de aluminio Winhouse", cantidad:"3", largo:"X-97", corte:"45/45"},
+      {codigo:"Junquillo termopanel 18-20mm", cantidad:"6", largo:"(X-80)/3-70.7", corte:"45/45"},
+      {codigo:"Junquillo termopanel 18-20mm", cantidad:"6", largo:"Y-204", corte:"45/45"},
+    ],
+    termopanel:[{cantidad:"3", ancho:"(X-80)/3-78.7", alto:"Y-212"}],
+    nota:"Fórmulas extraídas y verificadas desde la plantilla de cálculo oficial WinHouse S75 (PVC).",
+  },
+  { id:"WH_S75_3riel_98", grupo:"PVC — WinHouse S75", nombre:"Riel Triple — 3 hojas simétrica (hoja 98mm)", vars:["X","Y"],
+    perfiles:[
+      {codigo:"Marco triple riel S75", cantidad:"2", largo:"X+5", corte:"45/45"},
+      {codigo:"Marco triple riel S75", cantidad:"2", largo:"Y+5", corte:"45/45"},
+      {codigo:"Refuerzo marco corredera S75 1,2mm", cantidad:"4", largo:"X-80", corte:"90/90"},
+      {codigo:"Refuerzo marco corredera S75 1,2mm", cantidad:"4", largo:"Y-80", corte:"90/90"},
+      {codigo:"Hoja corredera 98", cantidad:"6", largo:"(X-80)/3+70.33", corte:"45/45"},
+      {codigo:"Hoja corredera 98", cantidad:"6", largo:"Y-75", corte:"45/45"},
+      {codigo:"Refuerzo hoja corredera 98 2mm", cantidad:"6", largo:"(X-80)/3-114.67", corte:"90/90"},
+      {codigo:"Refuerzo hoja corredera 98 2mm", cantidad:"6", largo:"Y-260", corte:"90/90"},
+      {codigo:"Refuerzo contraflecha", cantidad:"4", largo:"Y-260", corte:"90/90", condicion:"Y+5>=2300"},
+      {codigo:"Traslapo S75 corredera 98", cantidad:"4", largo:"Y-82", corte:"90/90"},
+      {codigo:"Riel de aluminio Winhouse", cantidad:"3", largo:"X-97", corte:"45/45"},
+      {codigo:"Junquillo termopanel 18-20mm", cantidad:"6", largo:"(X-80)/3-94.67", corte:"45/45"},
+      {codigo:"Junquillo termopanel 18-20mm", cantidad:"6", largo:"Y-240", corte:"45/45"},
+    ],
+    termopanel:[{cantidad:"3", ancho:"(X-80)/3-102.67", alto:"Y-248"}],
+    nota:"Fórmulas extraídas y verificadas desde la plantilla de cálculo oficial WinHouse S75 (PVC).",
+  },
+  { id:"WH_S75_asim2h_80", grupo:"PVC — WinHouse S75", nombre:"Doble Riel — 2 hojas asimétrica (hoja 80mm)", vars:["X","Y","A"],
+    perfiles:[
+      {codigo:"Marco doble riel corredera S75", cantidad:"2", largo:"X+5", corte:"45/45"},
+      {codigo:"Marco doble riel corredera S75", cantidad:"2", largo:"Y+5", corte:"45/45"},
+      {codigo:"Refuerzo marco corredera S75 1,2mm", cantidad:"2", largo:"X-80", corte:"90/90"},
+      {codigo:"Refuerzo marco corredera S75 1,2mm", cantidad:"2", largo:"Y-80", corte:"90/90"},
+      {codigo:"Hoja corredera 80 (hoja A)", cantidad:"2", largo:"A+5", corte:"45/45"},
+      {codigo:"Hoja corredera 80 (hoja B)", cantidad:"2", largo:"(X-A)+5", corte:"45/45"},
+      {codigo:"Hoja corredera 80 (vertical)", cantidad:"4", largo:"Y-75", corte:"45/45"},
+      {codigo:"Ref. New Multiple 1,2 (hoja A)", cantidad:"2", largo:"A-144", corte:"90/90"},
+      {codigo:"Ref. New Multiple 1,2 (hoja B)", cantidad:"2", largo:"(X-A)-144", corte:"90/90"},
+      {codigo:"Ref. New Multiple 1,2 (vertical)", cantidad:"4", largo:"Y-224", corte:"90/90"},
+      {codigo:"Refuerzo contraflecha", cantidad:"2", largo:"Y-224", corte:"90/90", condicion:"Y+5>=2300"},
+      {codigo:"Traslapo S75 corredera 80", cantidad:"2", largo:"Y-80", corte:"90/90"},
+      {codigo:"Riel de aluminio", cantidad:"2", largo:"X-97", corte:"90/90"},
+      {codigo:"Junquillo termopanel 18-20mm (hoja A)", cantidad:"2", largo:"A-124", corte:"45/45"},
+      {codigo:"Junquillo termopanel 18-20mm (hoja B)", cantidad:"2", largo:"(X-A)-124", corte:"45/45"},
+      {codigo:"Junquillo termopanel 18-20mm (vertical)", cantidad:"4", largo:"Y-204", corte:"45/45"},
+    ],
+    termopanel:[
+      {cantidad:"1", ancho:"A-130", alto:"Y-210"},
+      {cantidad:"1", ancho:"(X-A)-130", alto:"Y-210"},
+    ],
+    nota:"Fórmulas extraídas y verificadas desde la plantilla de cálculo oficial WinHouse S75 (PVC). A = ancho de la hoja angosta; la hoja ancha se calcula automáticamente.",
+  },
+  { id:"WH_S75_asim2h_98", grupo:"PVC — WinHouse S75", nombre:"Doble Riel — 2 hojas asimétrica (hoja 98mm)", vars:["X","Y","A"],
+    perfiles:[
+      {codigo:"Marco doble riel corredera S75", cantidad:"2", largo:"X+5", corte:"45/45"},
+      {codigo:"Marco doble riel corredera S75", cantidad:"2", largo:"Y+5", corte:"45/45"},
+      {codigo:"Refuerzo marco corredera S75 1,2mm", cantidad:"2", largo:"X-80", corte:"90/90"},
+      {codigo:"Refuerzo marco corredera S75 1,2mm", cantidad:"2", largo:"Y-80", corte:"90/90"},
+      {codigo:"Hoja corredera 98 (hoja A)", cantidad:"2", largo:"A+11", corte:"45/45"},
+      {codigo:"Hoja corredera 98 (hoja B)", cantidad:"2", largo:"(X-A)+11", corte:"45/45"},
+      {codigo:"Hoja corredera 98 (vertical)", cantidad:"4", largo:"Y-75", corte:"45/45"},
+      {codigo:"Refuerzo hoja corredera 98 2mm (hoja A)", cantidad:"2", largo:"A-174", corte:"90/90"},
+      {codigo:"Refuerzo hoja corredera 98 2mm (hoja B)", cantidad:"2", largo:"(X-A)-174", corte:"90/90"},
+      {codigo:"Refuerzo hoja corredera 98 2mm (vertical)", cantidad:"4", largo:"Y-260", corte:"90/90"},
+      {codigo:"Refuerzo contraflecha", cantidad:"2", largo:"Y-260", corte:"90/90", condicion:"Y+5>=2300"},
+      {codigo:"Traslapo S75 corredera 98", cantidad:"2", largo:"Y-82", corte:"90/90"},
+      {codigo:"Riel de aluminio", cantidad:"2", largo:"X-97", corte:"90/90"},
+      {codigo:"Junquillo termopanel 18-20mm (hoja A)", cantidad:"2", largo:"A-154", corte:"45/45"},
+      {codigo:"Junquillo termopanel 18-20mm (hoja B)", cantidad:"2", largo:"(X-A)-154", corte:"45/45"},
+      {codigo:"Junquillo termopanel 18-20mm (vertical)", cantidad:"4", largo:"Y-240", corte:"45/45"},
+    ],
+    termopanel:[
+      {cantidad:"1", ancho:"A-164", alto:"Y-250"},
+      {cantidad:"1", ancho:"(X-A)-164", alto:"Y-250"},
+    ],
+    nota:"Fórmulas extraídas y verificadas desde la plantilla de cálculo oficial WinHouse S75 (PVC). A = ancho de la hoja angosta; la hoja ancha se calcula automáticamente.",
+  },
+  { id:"WH_S75_3h_80", grupo:"PVC — WinHouse S75", nombre:"Doble Riel — 3 hojas simétrica (hoja 80mm)", vars:["X","Y"],
+    perfiles:[
+      {codigo:"Marco doble riel corredera S75", cantidad:"2", largo:"X+5", corte:"45/45"},
+      {codigo:"Marco doble riel corredera S75", cantidad:"2", largo:"Y+5", corte:"45/45"},
+      {codigo:"Refuerzo marco corredera S75 1,2mm", cantidad:"2", largo:"X-80", corte:"90/90"},
+      {codigo:"Refuerzo marco corredera S75 1,2mm", cantidad:"2", largo:"Y-80", corte:"90/90"},
+      {codigo:"Hoja corredera 80", cantidad:"6", largo:"(X-80)/3+58", corte:"45/45"},
+      {codigo:"Hoja corredera 80", cantidad:"6", largo:"Y-75", corte:"45/45"},
+      {codigo:"Ref. New Multiple 1,2", cantidad:"6", largo:"(X-80)/3-91", corte:"90/90"},
+      {codigo:"Ref. New Multiple 1,2", cantidad:"6", largo:"Y-224", corte:"90/90"},
+      {codigo:"Refuerzo contraflecha", cantidad:"4", largo:"Y-224", corte:"90/90", condicion:"Y+5>=2300"},
+      {codigo:"Traslapo S75 corredera 80", cantidad:"4", largo:"Y-82", corte:"90/90"},
+      {codigo:"Riel de aluminio Winhouse", cantidad:"2", largo:"X-97", corte:"45/45"},
+      {codigo:"Junquillo termopanel 18-20mm", cantidad:"6", largo:"(X-80)/3-71", corte:"45/45"},
+      {codigo:"Junquillo termopanel 18-20mm", cantidad:"6", largo:"Y-204", corte:"45/45"},
+    ],
+    termopanel:[{cantidad:"3", ancho:"(X-80)/3-79", alto:"Y-212"}],
+    nota:"Fórmulas extraídas y verificadas desde la plantilla de cálculo oficial WinHouse S75 (PVC). 3 hojas sobre 2 rieles.",
+  },
+  { id:"WH_S75_3h_98", grupo:"PVC — WinHouse S75", nombre:"Doble Riel — 3 hojas simétrica (hoja 98mm)", vars:["X","Y"],
+    perfiles:[
+      {codigo:"Marco doble riel corredera S75", cantidad:"2", largo:"X+5", corte:"45/45"},
+      {codigo:"Marco doble riel corredera S75", cantidad:"2", largo:"Y+5", corte:"45/45"},
+      {codigo:"Refuerzo marco corredera 1,2mm", cantidad:"2", largo:"X-80", corte:"90/90"},
+      {codigo:"Refuerzo marco corredera 1,2mm", cantidad:"2", largo:"Y-80", corte:"90/90"},
+      {codigo:"Hoja corredera 98", cantidad:"6", largo:"(X-80)/3+70", corte:"45/45"},
+      {codigo:"Hoja corredera 98", cantidad:"6", largo:"Y-75", corte:"45/45"},
+      {codigo:"Refuerzo hoja corredera 98 2mm", cantidad:"6", largo:"(X-80)/3-115", corte:"90/90"},
+      {codigo:"Refuerzo hoja corredera 98 2mm", cantidad:"6", largo:"Y-260", corte:"90/90"},
+      {codigo:"Refuerzo contraflecha", cantidad:"4", largo:"Y-260", corte:"90/90", condicion:"Y+5>=2300"},
+      {codigo:"Traslapo corredera 98", cantidad:"4", largo:"Y-82", corte:"90/90"},
+      {codigo:"Riel de aluminio Winhouse", cantidad:"2", largo:"X-97", corte:"45/45"},
+      {codigo:"Junquillo termopanel 18-20mm", cantidad:"6", largo:"(X-80)/3-95", corte:"45/45"},
+      {codigo:"Junquillo termopanel 18-20mm", cantidad:"6", largo:"Y-240", corte:"45/45"},
+    ],
+    termopanel:[{cantidad:"3", ancho:"(X-80)/3-103", alto:"Y-248"}],
+    nota:"Fórmulas extraídas y verificadas desde la plantilla de cálculo oficial WinHouse S75 (PVC). 3 hojas sobre 2 rieles.",
+  },
+  { id:"WH_S75_4h_80", grupo:"PVC — WinHouse S75", nombre:"Doble Riel — 4 hojas (hoja 80mm)", vars:["X","Y"],
+    perfiles:[
+      {codigo:"Marco doble riel corredera S75", cantidad:"2", largo:"X+5", corte:"45/45"},
+      {codigo:"Marco doble riel corredera S75", cantidad:"2", largo:"Y+5", corte:"45/45"},
+      {codigo:"Refuerzo marco corredera S75 1,2mm", cantidad:"2", largo:"X-80", corte:"90/90"},
+      {codigo:"Refuerzo marco corredera S75 1,2mm", cantidad:"2", largo:"Y-80", corte:"90/90"},
+      {codigo:"Hoja corredera 80", cantidad:"8", largo:"X/4+23.5", corte:"45/45"},
+      {codigo:"Hoja corredera 80", cantidad:"8", largo:"Y-75", corte:"45/45"},
+      {codigo:"Ref. New Multiple 1,2", cantidad:"8", largo:"X/4-125.5", corte:"90/90"},
+      {codigo:"Ref. New Multiple 1,2", cantidad:"8", largo:"Y-224", corte:"90/90"},
+      {codigo:"Refuerzo contraflecha", cantidad:"4", largo:"Y-224", corte:"90/90", condicion:"Y+5>=2300"},
+      {codigo:"Traslapo S75 corredera 80", cantidad:"4", largo:"Y-82", corte:"90/90"},
+      {codigo:"Riel de aluminio Winhouse", cantidad:"2", largo:"X-97", corte:"45/45"},
+      {codigo:"Junquillo termopanel 18-20mm", cantidad:"8", largo:"X/4-105.5", corte:"45/45"},
+      {codigo:"Junquillo termopanel 18-20mm", cantidad:"8", largo:"Y-204", corte:"45/45"},
+      {codigo:"Adaptador 4ta hoja", cantidad:"1", largo:"Y-80", corte:"90/90"},
+    ],
+    termopanel:[{cantidad:"4", ancho:"X/4-113.5", alto:"Y-212"}],
+    nota:"Fórmulas extraídas y verificadas desde la plantilla de cálculo oficial WinHouse S75 (PVC).",
+  },
+  { id:"WH_S75_4h_98", grupo:"PVC — WinHouse S75", nombre:"Doble Riel — 4 hojas (hoja 98mm)", vars:["X","Y"],
+    perfiles:[
+      {codigo:"Marco doble riel corredera S75", cantidad:"2", largo:"X+5", corte:"45/45"},
+      {codigo:"Marco doble riel corredera S75", cantidad:"2", largo:"Y+5", corte:"45/45"},
+      {codigo:"Refuerzo marco corredera S75 1,2mm", cantidad:"2", largo:"X-80", corte:"90/90"},
+      {codigo:"Refuerzo marco corredera S75 1,2mm", cantidad:"2", largo:"Y-80", corte:"90/90"},
+      {codigo:"Hoja corredera 98", cantidad:"8", largo:"X/4+32.5", corte:"45/45"},
+      {codigo:"Hoja corredera 98", cantidad:"8", largo:"Y-75", corte:"45/45"},
+      {codigo:"Refuerzo hoja corredera 98 2mm", cantidad:"8", largo:"X/4-152.5", corte:"90/90"},
+      {codigo:"Refuerzo hoja corredera 98 2mm", cantidad:"8", largo:"Y-260", corte:"90/90"},
+      {codigo:"Refuerzo contraflecha", cantidad:"4", largo:"Y-260", corte:"90/90", condicion:"Y+5>=2300"},
+      {codigo:"Traslapo S75 corredera 98", cantidad:"4", largo:"Y-82", corte:"90/90"},
+      {codigo:"Riel de aluminio Winhouse", cantidad:"2", largo:"X-97", corte:"45/45"},
+      {codigo:"Junquillo termopanel 18-20mm", cantidad:"8", largo:"X/4-132.5", corte:"45/45"},
+      {codigo:"Junquillo termopanel 18-20mm", cantidad:"8", largo:"Y-240", corte:"45/45"},
+      {codigo:"Adaptador 4ta hoja", cantidad:"1", largo:"Y-80", corte:"90/90"},
+    ],
+    termopanel:[{cantidad:"4", ancho:"X/4-140.5", alto:"Y-248"}],
+    nota:"Fórmulas extraídas y verificadas desde la plantilla de cálculo oficial WinHouse S75 (PVC).",
+  },
+  { id:"WH_S75_asim3h_80", grupo:"PVC — WinHouse S75", nombre:"Doble Riel — 3 hojas asimétrica (hoja 80mm, centro ancho)", vars:["X","Y"],
+    perfiles:[
+      {codigo:"Marco doble riel corredera S75", cantidad:"2", largo:"X+5", corte:"45/45"},
+      {codigo:"Marco doble riel corredera S75", cantidad:"2", largo:"Y+5", corte:"45/45"},
+      {codigo:"Refuerzo marco S75 corredera 1,2mm", cantidad:"2", largo:"X-80", corte:"90/90"},
+      {codigo:"Refuerzo marco S75 corredera 1,2mm", cantidad:"2", largo:"Y-80", corte:"90/90"},
+      {codigo:"Hoja corredera 80 (hojas A/C)", cantidad:"4", largo:"X/4+45", corte:"45/45"},
+      {codigo:"Hoja corredera 80 (hoja B)", cantidad:"2", largo:"X/2+5", corte:"45/45"},
+      {codigo:"Hoja corredera 80 (vertical)", cantidad:"6", largo:"Y-75", corte:"45/45"},
+      {codigo:"Refuerzo New Multiple 1,2mm (hojas A/C)", cantidad:"4", largo:"X/4-104", corte:"90/90"},
+      {codigo:"Refuerzo New Multiple 1,2mm (hoja B)", cantidad:"2", largo:"X/2-144", corte:"90/90"},
+      {codigo:"Refuerzo New Multiple 1,2mm (vertical)", cantidad:"6", largo:"Y-224", corte:"90/90"},
+      {codigo:"Refuerzo contraflecha", cantidad:"4", largo:"Y-224", corte:"90/90", condicion:"Y+5>=2300"},
+      {codigo:"Traslapo S75 corredera 80", cantidad:"4", largo:"Y-82", corte:"90/90"},
+      {codigo:"Riel de aluminio", cantidad:"2", largo:"X-97", corte:"90/90"},
+      {codigo:"Junquillo termopanel (hojas A/C)", cantidad:"4", largo:"X/4-84", corte:"45/45"},
+      {codigo:"Junquillo termopanel (hoja B)", cantidad:"2", largo:"X/2-124", corte:"45/45"},
+      {codigo:"Junquillo termopanel (vertical)", cantidad:"6", largo:"Y-204", corte:"45/45"},
+    ],
+    termopanel:[
+      {cantidad:"2", ancho:"X/4-94", alto:"Y-214"},
+      {cantidad:"1", ancho:"X/2-134", alto:"Y-214"},
+    ],
+    nota:"Fórmulas extraídas y verificadas. Diseño fijo: hoja central (B) mide la mitad del ancho total, hojas laterales (A y C) un cuarto cada una.",
+  },
+  { id:"WH_S75_asim3h_98", grupo:"PVC — WinHouse S75", nombre:"Doble Riel — 3 hojas asimétrica (hoja 98mm, centro ancho)", vars:["X","Y"],
+    perfiles:[
+      {codigo:"Marco doble riel corredera S75", cantidad:"2", largo:"X+5", corte:"45/45"},
+      {codigo:"Marco doble riel corredera S75", cantidad:"2", largo:"Y+5", corte:"45/45"},
+      {codigo:"Refuerzo marco S75 corredera 1,2mm", cantidad:"2", largo:"X-80", corte:"90/90"},
+      {codigo:"Refuerzo marco S75 corredera 1,2mm", cantidad:"2", largo:"Y-80", corte:"90/90"},
+      {codigo:"Hoja corredera 98 (hojas A/C)", cantidad:"4", largo:"X/4+63", corte:"45/45"},
+      {codigo:"Hoja corredera 98 (hoja B)", cantidad:"2", largo:"X/2+5", corte:"45/45"},
+      {codigo:"Hoja corredera 98 (vertical)", cantidad:"6", largo:"Y-75", corte:"45/45"},
+      {codigo:"Refuerzo hoja corredera 98 2mm (hojas A/C)", cantidad:"4", largo:"X/4-122", corte:"90/90"},
+      {codigo:"Refuerzo hoja corredera 98 2mm (hoja B)", cantidad:"2", largo:"X/2-180", corte:"90/90"},
+      {codigo:"Refuerzo hoja corredera 98 2mm (vertical)", cantidad:"6", largo:"Y-260", corte:"90/90"},
+      {codigo:"Refuerzo contraflecha", cantidad:"4", largo:"Y-260", corte:"90/90", condicion:"Y+5>=2300"},
+      {codigo:"Traslapo S75 corredera 98", cantidad:"4", largo:"Y-82", corte:"90/90"},
+      {codigo:"Riel de aluminio", cantidad:"2", largo:"X-97", corte:"90/90"},
+      {codigo:"Junquillo termopanel (hojas A/C)", cantidad:"4", largo:"X/4-102", corte:"45/45"},
+      {codigo:"Junquillo termopanel (hoja B)", cantidad:"2", largo:"X/2-160", corte:"45/45"},
+      {codigo:"Junquillo termopanel (vertical)", cantidad:"6", largo:"Y-240", corte:"45/45"},
+    ],
+    termopanel:[
+      {cantidad:"2", ancho:"X/4-112", alto:"Y-250"},
+      {cantidad:"1", ancho:"X/2-170", alto:"Y-250"},
+    ],
+    nota:"Fórmulas extraídas y verificadas. Diseño fijo: hoja central (B) mide la mitad del ancho total, hojas laterales (A y C) un cuarto cada una.",
+  },
 ];
 const TOGGLE_LABELS = { reforzada:"Reforzada", tp:"Con termopanel" };
 const PALETTE = ['#1D4E89','#E1601C','#3E7CB1','#6B8E23','#8B5CF6','#B8860B','#0E7C7B'];
@@ -493,10 +783,10 @@ function evaluar(formula, vars){
   if (formula === undefined || formula === null) return null;
   let f = String(formula);
   f = f.replace(/(\d)\(/g, '$1*(');
-  f = f.replace(/(\d)([XYMN])/g, '$1*$2');
+  f = f.replace(/(\d)([XYMNA])/g, '$1*$2');
   try{
-    const fn = new Function('X','Y','M','N', 'return (' + f + ');');
-    const v = fn(vars.X, vars.Y, vars.M||0, vars.N||0);
+    const fn = new Function('X','Y','M','N','A', 'return (' + f + ');');
+    const v = fn(vars.X, vars.Y, vars.M||0, vars.N||0, vars.A||0);
     return Math.round(v * 100) / 100;
   }catch(e){ return null; }
 }
@@ -524,17 +814,18 @@ function lineaDe(id){ return LINEAS.find(l=>l.id===id); }
 
 function calcularItemPerfiles(item){
   const line = lineaDe(item.lineaId);
-  const vars = {X:item.X, Y:item.Y, M:item.M||0, N:item.N||0};
+  const vars = {X:item.X, Y:item.Y, M:item.M||0, N:item.N||0, A:item.A||0};
   return line.perfiles.map(p=>{
+    if (p.condicion && !evaluar(p.condicion, vars)) return null;
     const codigo = resolverCodigo(p.codigo, item.toggles||{});
     const cantidad = Math.round(evaluar(p.cantidad, vars)) || 0;
     const largo = evaluar(p.largo, vars);
     return {codigo, cantidad, largo, corte:p.corte||null};
-  }).filter(r=>r.largo!==null && r.largo>0 && r.cantidad>0);
+  }).filter(r=>r!==null && r.largo!==null && r.largo>0 && r.cantidad>0);
 }
 function calcularItemVidrio(item){
   const line = lineaDe(item.lineaId);
-  const vars = {X:item.X, Y:item.Y, M:item.M||0, N:item.N||0};
+  const vars = {X:item.X, Y:item.Y, M:item.M||0, N:item.N||0, A:item.A||0};
   const cristales = line.vidrio || line.termopanel;
   const tipo = line.vidrio ? 'Vidrio' : 'Termopanel';
   if (!cristales) return [];
@@ -624,14 +915,21 @@ let sbUser = null;
 async function refrescarSesion(){
   const { data } = await sbClient.auth.getSession();
   sbUser = data.session ? data.session.user : null;
+  const gate = document.getElementById('appGate');
+  const app = document.getElementById('appMain');
   if (sbUser){
     const { data: perfil } = await sbClient.from('profiles').select('plan, empresa').eq('id', sbUser.id).single();
     planActual = (perfil && perfil.plan) || 'gratis';
     if (perfil && perfil.empresa && !document.getElementById('datEmpresa').value){
       document.getElementById('datEmpresa').value = perfil.empresa;
     }
+    gate.style.display = 'none';
+    app.style.display = 'grid';
   } else {
     planActual = 'gratis';
+    gate.style.display = 'flex';
+    app.style.display = 'none';
+    return;
   }
   renderAuthUI();
   renderListaProyectosGuardados();
@@ -641,46 +939,62 @@ async function refrescarSesion(){
 function renderAuthUI(){
   const body = document.getElementById('authBody');
   const badge = document.getElementById('planBadgeHead');
-  if (sbUser){
-    badge.textContent = planActual === 'pro' ? 'Pro' : 'Gratis';
-    body.innerHTML = `
-      <div class="auth-user">
-        <span class="email">${sbUser.email}</span>
-        <span class="plan-badge">${planActual === 'pro' ? 'PRO' : 'GRATIS'}</span>
-      </div>
-      <button class="btn" id="btnLogout" style="margin-top:8px;">Cerrar sesión</button>
-    `;
-    document.getElementById('btnLogout').addEventListener('click', async ()=>{
-      await sbClient.auth.signOut();
-      refrescarSesion();
-    });
-  } else {
-    badge.textContent = '';
-    body.innerHTML = `
-      <div class="field"><label>Email</label><input type="email" id="authEmail" placeholder="tu@correo.com"></div>
-      <div class="field"><label>Contraseña</label><input type="password" id="authPass" placeholder="Mínimo 6 caracteres"></div>
-      <button class="btn" id="btnLogin">Iniciar sesión</button>
-      <div style="height:8px;"></div>
-      <button class="btn secondary" id="btnSignup">Crear cuenta</button>
-      <div class="auth-error" id="authError"></div>
-    `;
-    document.getElementById('btnLogin').addEventListener('click', async ()=>{
-      const email = document.getElementById('authEmail').value.trim();
-      const password = document.getElementById('authPass').value;
-      const { error } = await sbClient.auth.signInWithPassword({ email, password });
-      if (error){ document.getElementById('authError').textContent = error.message; return; }
-      refrescarSesion();
-    });
-    document.getElementById('btnSignup').addEventListener('click', async ()=>{
-      const email = document.getElementById('authEmail').value.trim();
-      const password = document.getElementById('authPass').value;
-      const { error } = await sbClient.auth.signUp({ email, password });
-      if (error){ document.getElementById('authError').textContent = error.message; return; }
-      document.getElementById('authError').style.color = 'var(--blue)';
-      document.getElementById('authError').textContent = 'Cuenta creada. Revisa tu correo para confirmarla y luego inicia sesión.';
-    });
-  }
+  badge.textContent = planActual === 'pro' ? 'Pro' : 'Gratis';
+  body.innerHTML = `
+    <div class="auth-user">
+      <span class="email">${sbUser.email}</span>
+      <span class="plan-badge">${planActual === 'pro' ? 'PRO' : 'GRATIS'}</span>
+    </div>
+    <button class="btn" id="btnLogout" style="margin-top:8px;">Cerrar sesión</button>
+  `;
+  document.getElementById('btnLogout').addEventListener('click', async ()=>{
+    await sbClient.auth.signOut();
+    refrescarSesion();
+  });
 }
+
+// ---- Pantalla de acceso (gate) ----
+let gateModo = 'login';
+document.getElementById('gateTabLogin').addEventListener('click', ()=>{
+  gateModo = 'login';
+  document.getElementById('gateTabLogin').classList.add('active');
+  document.getElementById('gateTabSignup').classList.remove('active');
+  document.getElementById('gateSignupFields').style.display = 'none';
+  document.getElementById('gateSubmit').textContent = 'Iniciar sesión';
+  document.getElementById('gateError').textContent = '';
+});
+document.getElementById('gateTabSignup').addEventListener('click', ()=>{
+  gateModo = 'signup';
+  document.getElementById('gateTabSignup').classList.add('active');
+  document.getElementById('gateTabLogin').classList.remove('active');
+  document.getElementById('gateSignupFields').style.display = 'block';
+  document.getElementById('gateSubmit').textContent = 'Crear cuenta gratis';
+  document.getElementById('gateError').textContent = '';
+});
+document.getElementById('gateSubmit').addEventListener('click', async ()=>{
+  const email = document.getElementById('gateEmail').value.trim();
+  const password = document.getElementById('gatePass').value;
+  const errorEl = document.getElementById('gateError');
+  errorEl.style.color = 'var(--orange)';
+  errorEl.textContent = '';
+  if (!email || !password){ errorEl.textContent = 'Completa email y contraseña.'; return; }
+  if (gateModo === 'login'){
+    const { error } = await sbClient.auth.signInWithPassword({ email, password });
+    if (error){ errorEl.textContent = error.message; return; }
+    refrescarSesion();
+  } else {
+    const empresa = document.getElementById('gateEmpresa').value.trim();
+    const telefono = document.getElementById('gateTelefono').value.trim();
+    const direccion = document.getElementById('gateDireccion').value.trim();
+    const { error } = await sbClient.auth.signUp({
+      email, password,
+      options: { data: { empresa, telefono, direccion } }
+    });
+    if (error){ errorEl.textContent = error.message; return; }
+    errorEl.style.color = 'var(--blue)';
+    errorEl.textContent = 'Cuenta creada. Revisa tu correo para confirmarla y luego inicia sesión.';
+  }
+});
 
 async function guardarProyectoDB(){
   if (!sbUser){ alert('Inicia sesión primero para guardar tu proyecto.'); return; }
@@ -794,6 +1108,7 @@ function renderAddToggles(){
 function updateAddForm(){
   const line = lineaDe(addLineSelect.value);
   document.getElementById('addMNWrap').style.display = line.vars.includes('M') ? 'block' : 'none';
+  document.getElementById('addAWrap').style.display = line.vars.includes('A') ? 'block' : 'none';
   renderAddToggles();
   const X = parseFloat(document.getElementById('addX').value)||0;
   const Y = parseFloat(document.getElementById('addY').value)||0;
@@ -809,9 +1124,11 @@ document.getElementById('btnAgregar').addEventListener('click', ()=>{
   const Y = parseFloat(document.getElementById('addY').value)||0;
   const M = parseFloat(document.getElementById('addM').value)||0;
   const N = parseFloat(document.getElementById('addN').value)||0;
+  const A = parseFloat(document.getElementById('addA').value)||0;
   const cantidad = Math.max(1, parseInt(document.getElementById('addCantidad').value)||1);
   if (X<=0 || Y<=0) return;
-  proyecto.push({ id:nextId++, lineaId:line.id, toggles:{...addFormToggles}, X, Y, M, N, cantidad });
+  if (line.vars.includes('A') && (A<=0 || A>=X)) { alert('El ancho de la hoja angosta debe ser mayor a 0 y menor que el ancho total.'); return; }
+  proyecto.push({ id:nextId++, lineaId:line.id, toggles:{...addFormToggles}, X, Y, M, N, A, cantidad });
   desbloqueado = false;
   renderAll();
 });
@@ -835,7 +1152,7 @@ function renderProyecto(){
     row.innerHTML = `
       <div class="info">
         <div class="l1">${line.nombre}</div>
-        <div class="l2">${item.X}×${item.Y} mm${variantes?' · '+variantes:''}</div>
+        <div class="l2">${item.X}×${item.Y} mm${line.vars.includes('A') ? ' · A='+item.A+'mm' : ''}${variantes?' · '+variantes:''}</div>
       </div>
       <input type="number" class="qty-input" min="1" value="${item.cantidad}">
       <div class="del">×</div>
@@ -1187,6 +1504,7 @@ document.getElementById('btnPDF').addEventListener('click', ()=>{
       const variantes = Object.keys(it.toggles||{}).filter(k=>it.toggles[k]).map(k=>TOGGLE_LABELS[k]||k).join(', ') || '—';
       let medidas = it.X+' × '+it.Y;
       if (line.vars.includes('M')) medidas += ' (M='+it.M+', N='+it.N+')';
+      if (line.vars.includes('A')) medidas += ' (hoja angosta A='+it.A+')';
       return [i+1, line.nombre, medidas, variantes, it.cantidad];
     }),
     styles:{fontSize:8.5}, headStyles:{fillColor:[29,78,137], textColor:255}, margin:{left:14,right:14},
