@@ -3,7 +3,23 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>haceventanas — Pauta de Corte</title>
+<title>haceventanas.com — Pauta de Corte y Presupuestos para Ventaneros</title>
+<meta name="description" content="Calcula la pauta de corte optimizada de tus proyectos de ventanas en aluminio y PVC, aprovecha mejor cada barra, y genera el presupuesto para tu cliente en PDF. Gratis para empezar.">
+<meta name="robots" content="index, follow">
+<link rel="canonical" href="https://haceventanas.com/">
+
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://haceventanas.com/">
+<meta property="og:title" content="haceventanas.com — Pauta de Corte y Presupuestos para Ventaneros">
+<meta property="og:description" content="Calcula la pauta de corte optimizada de tus proyectos de ventanas en aluminio y PVC, aprovecha mejor cada barra, y genera el presupuesto para tu cliente en PDF.">
+<meta property="og:image" content="https://haceventanas.com/og-image.png">
+<meta property="og:locale" content="es_CL">
+
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="haceventanas.com — Pauta de Corte y Presupuestos para Ventaneros">
+<meta name="twitter:description" content="Calcula la pauta de corte optimizada de tus proyectos de ventanas en aluminio y PVC, aprovecha mejor cada barra, y genera el presupuesto para tu cliente en PDF.">
+<meta name="twitter:image" content="https://haceventanas.com/og-image.png">
+
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -230,6 +246,18 @@
   .gate-toggle{display:flex; gap:6px; margin-bottom:18px;}
   .gate-toggle button{flex:1; padding:8px; border:1px solid var(--line); background:#fff; font-family:var(--mono); font-size:11px; text-transform:uppercase; cursor:pointer; color:var(--ink-soft);}
   .gate-toggle button.active{background:var(--ink); color:#fff; border-color:var(--ink);}
+
+  .hero{background:var(--panel); border-bottom:1px solid var(--line); padding:52px 32px 44px;}
+  .hero-inner{max-width:880px; margin:0 auto; text-align:center;}
+  .hero-inner h2{font-family:var(--disp); font-size:32px; line-height:1.28; margin:0 0 16px; color:var(--ink); letter-spacing:-0.01em;}
+  .hero-inner h2 .accent{color:var(--blue);}
+  .hero-inner p{font-size:15px; color:var(--ink-soft); max-width:600px; margin:0 auto 30px; line-height:1.6;}
+  .hero-features{display:flex; gap:22px; justify-content:center; flex-wrap:wrap; margin-bottom:32px;}
+  .hero-feature{display:flex; align-items:flex-start; gap:10px; text-align:left; max-width:230px; font-size:13px; color:var(--ink); line-height:1.5;}
+  .hero-feature-icon{font-size:20px; flex-shrink:0; width:30px; height:30px; border:1px solid var(--line); display:flex; align-items:center; justify-content:center; background:var(--blue-soft);}
+  .hero-feature b{display:block; margin-bottom:2px;}
+  .hero-cta{display:inline-block; width:auto; padding:13px 30px; text-decoration:none; font-size:14px; font-weight:600;}
+  @media (max-width:600px){ .hero-inner h2{font-size:25px;} }
 </style>
 </head>
 <body>
@@ -237,10 +265,22 @@
 <header>
   <div class="brand">
     <div class="mark">HV</div>
-    <h1>haceventanas — Pauta de Corte</h1>
+    <h1>haceventanas.com</h1>
   </div>
-  <p>Arma el proyecto completo de una casa: agrega cada ventana con su línea y medidas, y el sistema consolida y optimiza el corte de todas juntas. Descarga la pauta lista para el taller en PDF.</p>
 </header>
+
+<section class="hero">
+  <div class="hero-inner">
+    <h2>Pauta de corte y presupuestos para<br><span class="accent">ventaneros</span>, en minutos.</h2>
+    <p>Arma el proyecto completo de una casa, obtén la pauta de corte optimizada por línea de aluminio o PVC, y descarga el presupuesto listo para tu cliente — todo en un solo lugar.</p>
+    <div class="hero-features">
+      <div class="hero-feature"><span class="hero-feature-icon">✂️</span><div><b>Pauta de corte automática</b>Por línea, sin fórmulas que memorizar.</div></div>
+      <div class="hero-feature"><span class="hero-feature-icon">📐</span><div><b>Optimizador de barras</b>Aprovecha mejor cada barra de 6 metros.</div></div>
+      <div class="hero-feature"><span class="hero-feature-icon">💰</span><div><b>Presupuesto al cliente</b>Con IVA, descuento, y PDF descargable.</div></div>
+    </div>
+    <a href="#appMain" class="btn hero-cta">Empezar gratis ↓</a>
+  </div>
+</section>
 
 <main id="appMain">
   <div class="left-col">
