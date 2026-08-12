@@ -329,6 +329,12 @@
   .dash-empty{border:1px dashed var(--line); padding:50px 30px; text-align:center;}
   .dash-empty p{color:var(--ink-soft); font-size:13.5px; margin:0 0 18px;}
   .dash-empty button{padding:11px 24px; border:1px solid var(--ink); background:var(--ink); color:#fff; font-family:var(--sans); font-weight:600; font-size:13px; cursor:pointer;}
+
+  .perfil-tag{display:flex; align-items:center; gap:8px;}
+  .perfil-tag .p-icon{color:var(--blue); flex-shrink:0;}
+  .perfil-tag .p-text{line-height:1.3;}
+  .perfil-tag .p-name{font-weight:600; font-size:12.5px; display:block;}
+  .perfil-tag .p-code{font-family:var(--mono); font-size:10px; color:var(--ink-soft); display:block;}
 </style>
 </head>
 <body>
@@ -985,6 +991,49 @@ function resolverCodigo(codigo, toggles){
 }
 function colorFor(len){ return PALETTE[Math.abs(Math.round(len)) % PALETTE.length]; }
 
+// ---------- Nombres e íconos de perfil ----------
+// Nombres tomados directamente de los catálogos originales (Sodal). Los códigos de
+// WinHouse ya vienen con nombre descriptivo de fábrica, así que no necesitan diccionario.
+const PERFIL_NOMBRES = {
+  "2001":"Riel Superior", "2002":"Riel Inferior", "2004":"Cabezal", "2005":"Zócalo",
+  "2009":"Jamba", "2010":"Pierna", "2016":"Traslapo TP", "2019":"Traslapo", "2020":"Pierna Abierta TP",
+  "2501":"Riel Superior", "2502":"Riel Inferior", "2504":"Cabezal", "2505":"Zócalo",
+  "2507":"Traslapo", "2509":"Jamba E", "2510":"Pierna", "2511R":"Traslapo Reforzado",
+  "2512R":"Pierna Reforzada", "2517":"Pierna Abierta TP", "2519":"Traslapo TP",
+  "2529R":"Pierna Reforzada TP", "2530R":"Traslapo Reforzado TP",
+  "3222":"Marco", "3225":"Bastidor Grande", "3303":"Traslapo", "3308":"Hoja TP", "3308R":"Hoja TP RPT",
+  "3324":"Riel Cámara", "3324R":"Riel RPT",
+  "4202":"Hoja", "4209":"Marco Fijo", "4229":"Junquillo",
+  "4602":"Zócalo Quicio MAB", "4604":"Pierna",
+  "4801":"Riel Inferior", "4802":"Riel Superior", "4803":"Jamba", "4804":"Zócalo", "4805":"Cabezal",
+  "4806":"Traslapo", "4808":"Pierna con Aleta", "4810":"Traslapo Reforzado", "4811":"Pierna Reforzada",
+  "S281":"Riel", "S282":"Hoja TP", "S283":"Traslapo", "S285":"Riel Triple", "S286":"Cortagotera",
+  "S381":"Marco", "S381R":"Marco RPT", "S385":"Cámara de Agua", "S386":"Hoja TP", "S386R":"Hoja RPT TP",
+  "S501":"Pierna", "S502":"Zócalo Cabezal", "S503":"Palillo",
+  "S831":"Riel Inferior 4L", "S832":"Riel Superior", "S833":"Jamba 4L", "S834":"Hoja",
+};
+
+function nombreDePerfil(codigo){
+  if (PERFIL_NOMBRES[codigo]) return { nombre: PERFIL_NOMBRES[codigo], mostrarCodigo: true };
+  // Los nombres de WinHouse (y cualquier código no mapeado) ya son descriptivos por sí mismos.
+  return { nombre: codigo, mostrarCodigo: false };
+}
+
+function iconoPerfil(nombre){
+  const n = (nombre||'').toLowerCase();
+  const s = (inner)=>`<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" style="flex-shrink:0;">${inner}</svg>`;
+  if (n.includes('vidrio')||n.includes('cristal')||n.includes('termopanel')) return s('<rect x="3" y="3" width="18" height="18" rx="1"/><line x1="3" y1="21" x2="21" y2="3"/>');
+  if (n.includes('marco')||n.includes('bastidor')) return s('<rect x="3" y="3" width="18" height="18" rx="1"/><rect x="7.5" y="7.5" width="9" height="9" rx="1"/>');
+  if (n.includes('hoja')) return s('<rect x="4" y="3" width="16" height="18" rx="1"/><line x1="4" y1="3" x2="20" y2="21"/>');
+  if (n.includes('riel')) return s('<rect x="2" y="9" width="20" height="6" rx="1"/><line x1="6" y1="9" x2="6" y2="15"/><line x1="12" y1="9" x2="12" y2="15"/><line x1="18" y1="9" x2="18" y2="15"/>');
+  if (n.includes('junquillo')||n.includes('palillo')) return s('<rect x="10" y="2" width="4" height="20" rx="1"/>');
+  if (n.includes('refuerzo')||n.includes('ref.')) return s('<path d="M6 3 V21 M6 3 H18 M6 21 H18"/>');
+  if (n.includes('traslapo')) return s('<rect x="3" y="6" width="12" height="12" rx="1"/><rect x="9" y="6" width="12" height="12" rx="1" opacity="0.5"/>');
+  if (n.includes('adaptador')) return s('<circle cx="7" cy="12" r="4"/><circle cx="17" cy="12" r="4"/><line x1="11" y1="12" x2="13" y2="12"/>');
+  if (n.includes('zócalo')||n.includes('cabezal')||n.includes('jamba')||n.includes('pierna')) return s('<path d="M4 4 V20 H20"/>');
+  return s('<rect x="4" y="4" width="16" height="16" rx="1"/>');
+}
+
 // ---------- Estado del proyecto ----------
 let proyecto = [];
 let nextId = 1;
@@ -1619,11 +1668,12 @@ function renderResultadosContenido(wrap){
   const t1 = document.createElement('div'); t1.className='section-title'; t1.textContent='Pauta de corte consolidada';
   wrap.appendChild(t1);
   const tabla1 = document.createElement('table'); tabla1.className='spec-table';
-  tabla1.innerHTML = '<thead><tr><th>Código</th><th>Cantidad</th><th>Largo</th><th>Ángulo</th></tr></thead>';
+  tabla1.innerHTML = '<thead><tr><th>Perfil</th><th>Cantidad</th><th>Largo</th><th>Ángulo</th></tr></thead>';
   const tbody1 = document.createElement('tbody');
   perfilesOrdenados.forEach(p=>{
+    const info = nombreDePerfil(p.codigo);
     const tr = document.createElement('tr');
-    tr.innerHTML = `<td><span class="codigo-pill">${p.codigo}</span></td><td class="num">${p.cantidad}</td><td class="num">${p.largo} mm</td><td class="mono">${p.corte||'—'}</td>`;
+    tr.innerHTML = `<td><div class="perfil-tag"><span class="p-icon">${iconoPerfil(info.nombre)}</span><span class="p-text"><span class="p-name">${info.nombre}</span>${info.mostrarCodigo?'<span class="p-code">'+p.codigo+'</span>':''}</span></div></td><td class="num">${p.cantidad}</td><td class="num">${p.largo} mm</td><td class="mono">${p.corte||'—'}</td>`;
     tbody1.appendChild(tr);
   });
   tabla1.appendChild(tbody1);
@@ -1679,8 +1729,9 @@ function renderResultadosContenido(wrap){
     const barras = resultadosPorCodigo[codigo];
     const group = document.createElement('div'); group.className='bar-group';
     const desp = barras.reduce((a,b)=>a+(largoBarra-b.usado),0);
+    const info = nombreDePerfil(codigo);
     group.innerHTML = `<div class="bar-group-head">
-      <span class="codigo-pill">${codigo}</span>
+      <div class="perfil-tag"><span class="p-icon">${iconoPerfil(info.nombre)}</span><span class="p-text"><span class="p-name">${info.nombre}</span>${info.mostrarCodigo?'<span class="p-code">'+codigo+'</span>':''}</span></div>
       <span class="meta">${barras.length} barra${barras.length!==1?'s':''} de ${largoBarra} mm · ${grupos[codigo].length} piezas · desperdicio ${desp.toFixed(0)} mm</span>
     </div>`;
     barras.forEach((barra,i)=>{
@@ -1721,8 +1772,9 @@ function renderResultadosContenido(wrap){
     .map(p=>p.codigo)
     .filter((c,i,arr)=>arr.indexOf(c)===i)
     .forEach(codigo=>{
+      const info = nombreDePerfil(codigo);
       inputsHTML += `<div class="price-row">
-        <div class="price-label"><span class="codigo-pill">${codigo}</span></div>
+        <div class="price-label"><div class="perfil-tag"><span class="p-icon">${iconoPerfil(info.nombre)}</span><span class="p-text"><span class="p-name">${info.nombre}</span>${info.mostrarCodigo?'<span class="p-code">'+codigo+'</span>':''}</span></div></div>
         <div class="price-input-wrap"><span>$</span><input type="number" min="0" step="100" class="precio-perfil" data-codigo="${codigo}" value="${precios.perfiles[codigo]||''}"></div>
       </div>`;
     });
@@ -1890,8 +1942,11 @@ document.getElementById('btnPDF').addEventListener('click', ()=>{
   doc.text('Pauta de corte consolidada', 14, y); y+=4;
   doc.autoTable({
     startY:y,
-    head:[['Código','Cantidad','Largo (mm)']],
-    body: [...consolidado.perfiles].sort((a,b)=> a.codigo.localeCompare(b.codigo) || b.largo-a.largo).map(p=>[p.codigo,p.cantidad,p.largo]),
+    head:[['Perfil','Código','Cantidad','Largo (mm)']],
+    body: [...consolidado.perfiles].sort((a,b)=> a.codigo.localeCompare(b.codigo) || b.largo-a.largo).map(p=>{
+      const info = nombreDePerfil(p.codigo);
+      return [info.nombre, info.mostrarCodigo?p.codigo:'—', p.cantidad, p.largo];
+    }),
     styles:{fontSize:8.5}, headStyles:{fillColor:[29,78,137], textColor:255}, margin:{left:14,right:14},
   });
   y = doc.lastAutoTable.finalY + 10;
@@ -1912,8 +1967,10 @@ document.getElementById('btnPDF').addEventListener('click', ()=>{
   Object.keys(grupos).forEach(codigo=>{
     if (y > 255){ doc.addPage(); y=18; }
     const barras = optimizarBarras(grupos[codigo], largoBarra, kerf);
+    const infoPdf = nombreDePerfil(codigo);
+    const tituloPerfil = infoPdf.mostrarCodigo ? (infoPdf.nombre + ' (' + codigo + ')') : infoPdf.nombre;
     doc.setFont('helvetica','bold'); doc.setFontSize(11);
-    doc.text('Perfil ' + codigo + ' — ' + barras.length + ' barra(s) de ' + largoBarra + ' mm', 14, y);
+    doc.text(tituloPerfil + ' — ' + barras.length + ' barra(s) de ' + largoBarra + ' mm', 14, y);
     y+=4;
     doc.autoTable({
       startY:y,
