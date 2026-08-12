@@ -351,7 +351,7 @@
       <button class="nav-item disabled">Inventario<span class="soon">Pronto</span></button>
       <button class="nav-item disabled">Clientes<span class="soon">Pronto</span></button>
       <button class="nav-item disabled">Precios<span class="soon">Pronto</span></button>
-      <button class="nav-item disabled">Mi empresa<span class="soon">Pronto</span></button>
+      <button class="nav-item" data-view="empresa">Mi empresa</button>
     </nav>
     <div class="sidebar-plan"><span>Plan</span><span id="sidebarPlanBadge">Gratis</span></div>
     <button class="nav-item" id="btnSidebarLogout" style="margin-top:6px; color:var(--ink-soft);">Cerrar sesión</button>
@@ -359,6 +359,7 @@
   <div class="shell-content" id="shellContent">
     <div id="viewDashboard" class="shell-view"></div>
     <div id="viewCotizaciones" class="shell-view" style="display:none;"></div>
+    <div id="viewEmpresa" class="shell-view" style="display:none;"></div>
   </div>
 </div>
 
@@ -1148,9 +1149,11 @@ function cambiarVista(nombre){
   document.querySelectorAll('.nav-item[data-view]').forEach(b=> b.classList.toggle('active', b.dataset.view===nombre));
   document.getElementById('viewDashboard').style.display = nombre==='dashboard' ? 'block' : 'none';
   document.getElementById('viewCotizaciones').style.display = nombre==='cotizaciones' ? 'block' : 'none';
+  document.getElementById('viewEmpresa').style.display = nombre==='empresa' ? 'block' : 'none';
   document.getElementById('appMain').style.display = nombre==='nueva' ? 'grid' : 'none';
   if (nombre==='dashboard') renderDashboardView();
   if (nombre==='cotizaciones') renderCotizacionesView();
+  if (nombre==='empresa') renderEmpresaView();
 }
 
 document.querySelectorAll('.nav-item[data-view]').forEach(btn=>{
@@ -1261,6 +1264,40 @@ async function renderCotizacionesView(){
     await sbClient.from('projects').delete().eq('id', b.dataset.id);
     renderCotizacionesView();
   }));
+}
+
+async function renderEmpresaView(){
+  const el = document.getElementById('viewEmpresa');
+  el.innerHTML = '<div class="empty">Cargando…</div>';
+  const { data: perfil } = await sbClient.from('profiles').select('empresa, telefono, direccion, plan, created_at').eq('id', sbUser.id).single();
+  const p = perfil || {};
+  const fecha = p.created_at ? new Date(p.created_at).toLocaleDateString('es-CL') : '—';
+
+  el.innerHTML = `
+    <h2>Mi empresa</h2>
+    <p class="sub">Estos datos aparecen en tus presupuestos y en el PDF que descargas para tus clientes.</p>
+    <div style="max-width:420px;">
+      <div class="field"><label>Nombre de la empresa</label><input type="text" id="empEmpresa" value="${p.empresa||''}" placeholder="Nombre de tu empresa"></div>
+      <div class="field"><label>Teléfono</label><input type="text" id="empTelefono" value="${p.telefono||''}" placeholder="+56 9 ..."></div>
+      <div class="field"><label>Dirección</label><input type="text" id="empDireccion" value="${p.direccion||''}" placeholder="Opcional"></div>
+      <div class="field"><label>Email de la cuenta</label><input type="text" value="${sbUser.email}" disabled style="background:#F2F2EF; color:var(--ink-soft);"></div>
+      <button class="btn" id="btnGuardarEmpresa">Guardar cambios</button>
+      <div class="auth-error" id="empresaMsg"></div>
+    </div>
+    <p style="font-family:var(--mono); font-size:11px; color:var(--ink-soft); margin-top:26px;">Plan actual: ${planActual==='pro'?'Pro':'Gratis'} · Miembro desde ${fecha}</p>
+  `;
+
+  document.getElementById('btnGuardarEmpresa').addEventListener('click', async ()=>{
+    const empresa = document.getElementById('empEmpresa').value.trim();
+    const telefono = document.getElementById('empTelefono').value.trim();
+    const direccion = document.getElementById('empDireccion').value.trim();
+    const msg = document.getElementById('empresaMsg');
+    const { error } = await sbClient.from('profiles').update({ empresa, telefono, direccion }).eq('id', sbUser.id);
+    if (error){ msg.style.color = 'var(--orange)'; msg.textContent = 'Error al guardar: ' + error.message; return; }
+    msg.style.color = 'var(--blue)';
+    msg.textContent = 'Datos guardados ✓';
+    document.getElementById('datEmpresa').value = empresa;
+  });
 }
 
 let authModo = 'login';
