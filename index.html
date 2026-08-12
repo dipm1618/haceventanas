@@ -3,10 +3,14 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>haceventanas.com — Pauta de Corte y Presupuestos para Ventaneros</title>
-<meta name="description" content="Calcula la pauta de corte optimizada de tus proyectos de ventanas en aluminio y PVC, aprovecha mejor cada barra, y genera el presupuesto para tu cliente en PDF. Gratis para empezar.">
+<title>haceventanas.com — Pauta de Corte y Presupuestos para Ventaneros en Chile</title>
+<meta name="description" content="Calcula la pauta de corte optimizada de tus proyectos de ventanas en aluminio y PVC, aprovecha mejor cada barra, y genera el presupuesto para tu cliente en PDF. Herramienta gratis para ventaneros en Chile.">
 <meta name="robots" content="index, follow">
 <link rel="canonical" href="https://haceventanas.com/">
+
+<link rel="icon" type="image/x-icon" href="/favicon.ico">
+<link rel="icon" type="image/png" sizes="192x192" href="/favicon-192.png">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
 
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://haceventanas.com/">
@@ -20,7 +24,27 @@
 <meta name="twitter:description" content="Calcula la pauta de corte optimizada de tus proyectos de ventanas en aluminio y PVC, aprovecha mejor cada barra, y genera el presupuesto para tu cliente en PDF.">
 <meta name="twitter:image" content="https://haceventanas.com/og-image.png">
 
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  "name": "haceventanas.com",
+  "url": "https://haceventanas.com/",
+  "applicationCategory": "BusinessApplication",
+  "operatingSystem": "Web",
+  "description": "Calculadora de pauta de corte, optimizador de barras y generador de presupuestos para proyectos de ventanas de aluminio y PVC.",
+  "areaServed": { "@type": "Country", "name": "Chile" },
+  "inLanguage": "es-CL",
+  "offers": {
+    "@type": "Offer",
+    "price": "0",
+    "priceCurrency": "CLP"
+  }
+}
+</script>
+
 <link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
@@ -258,6 +282,53 @@
   .hero-feature b{display:block; margin-bottom:2px;}
   .hero-cta{display:inline-block; width:auto; padding:13px 30px; text-decoration:none; font-size:14px; font-weight:600;}
   @media (max-width:600px){ .hero-inner h2{font-size:25px;} }
+
+  .faq{background:var(--panel); border-top:1px solid var(--line); padding:50px 32px 60px;}
+  .faq-inner{max-width:760px; margin:0 auto;}
+  .faq-inner h2{font-family:var(--disp); font-size:22px; text-align:center; margin:0 0 34px; color:var(--ink);}
+  .faq-item{border-bottom:1px solid var(--line); padding:18px 0;}
+  .faq-item:first-of-type{border-top:1px solid var(--line);}
+  .faq-item h3{font-family:var(--sans); font-size:14.5px; font-weight:600; margin:0 0 8px; color:var(--ink);}
+  .faq-item p{font-size:13.5px; color:var(--ink-soft); margin:0; line-height:1.6;}
+  footer{padding:20px 32px; text-align:center; font-size:11.5px; color:var(--ink-soft); font-family:var(--mono);}
+
+  .app-shell{display:flex; max-width:1400px; margin:0 auto; align-items:flex-start;}
+  .sidebar{width:220px; flex-shrink:0; background:var(--panel); border-right:1px solid var(--line); padding:20px 14px; display:flex; flex-direction:column; min-height:calc(100vh - 66px); position:sticky; top:0;}
+  .sidebar-brand{display:flex; align-items:center; gap:8px; padding:0 8px 22px;}
+  .sidebar-brand .mark{width:26px; height:26px; border:1px solid var(--ink); background:var(--orange); color:#fff; display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:700; font-family:var(--disp); flex-shrink:0;}
+  .sidebar-brand span{font-family:var(--disp); font-weight:600; font-size:14px;}
+  .sidebar-nav{display:flex; flex-direction:column; gap:2px;}
+  .nav-item{display:flex; align-items:center; gap:8px; padding:9px 10px; border:none; background:none; text-align:left; font-family:var(--sans); font-size:13px; color:var(--ink-soft); cursor:pointer; width:100%;}
+  .nav-item:hover{background:var(--blue-soft);}
+  .nav-item.active{background:var(--ink); color:#fff;}
+  .nav-item.disabled{color:var(--alum); cursor:default;}
+  .nav-item.disabled:hover{background:none;}
+  .nav-item .soon{margin-left:auto; font-family:var(--mono); font-size:9px; text-transform:uppercase; color:var(--alum); letter-spacing:.03em;}
+  .sidebar-plan{margin-top:auto; padding-top:14px; border-top:1px solid var(--line); font-family:var(--mono); font-size:11px; color:var(--ink-soft); display:flex; justify-content:space-between; padding-left:8px; padding-right:8px;}
+  .sidebar-plan span:last-child{color:var(--blue); font-weight:600;}
+
+  .shell-content{flex:1; min-width:0; padding:28px 32px 60px;}
+  .shell-view h2{font-family:var(--disp); font-size:19px; margin:0 0 4px; color:var(--ink);}
+  .shell-view .sub{color:var(--ink-soft); font-size:13px; margin:0 0 26px;}
+
+  .stat-grid{display:grid; grid-template-columns:repeat(auto-fit, minmax(150px,1fr)); gap:14px; margin-bottom:30px;}
+  .stat-card{background:var(--panel); border:1px solid var(--line); padding:16px;}
+  .stat-card .lbl{font-family:var(--mono); font-size:10.5px; text-transform:uppercase; letter-spacing:.04em; color:var(--ink-soft); margin-bottom:8px;}
+  .stat-card .val{font-family:var(--mono); font-size:26px; font-weight:600; color:var(--ink);}
+
+  .work-list{border:1px solid var(--line);}
+  .work-row{display:flex; align-items:center; gap:14px; padding:12px 16px; border-bottom:1px solid var(--line); font-size:13px;}
+  .work-row:last-child{border-bottom:none;}
+  .work-row .w-name{flex:1; min-width:0;}
+  .work-row .w-name b{display:block; font-weight:600;}
+  .work-row .w-name span{color:var(--ink-soft); font-size:11.5px;}
+  .work-row .w-date{font-family:var(--mono); font-size:11.5px; color:var(--ink-soft); flex-shrink:0;}
+  .work-row button{border:1px solid var(--line); background:#fff; font-size:11.5px; padding:6px 12px; cursor:pointer; font-family:var(--sans); flex-shrink:0;}
+  .work-row button:hover{border-color:var(--blue); color:var(--blue);}
+
+  .dash-empty{border:1px dashed var(--line); padding:50px 30px; text-align:center;}
+  .dash-empty p{color:var(--ink-soft); font-size:13.5px; margin:0 0 18px;}
+  .dash-empty button{padding:11px 24px; border:1px solid var(--ink); background:var(--ink); color:#fff; font-family:var(--sans); font-weight:600; font-size:13px; cursor:pointer;}
 </style>
 </head>
 <body>
@@ -269,7 +340,29 @@
   </div>
 </header>
 
-<section class="hero">
+<div class="app-shell" id="appShell" style="display:none;">
+  <aside class="sidebar">
+    <div class="sidebar-brand"><div class="mark">HV</div><span>haceventanas</span></div>
+    <nav class="sidebar-nav">
+      <button class="nav-item active" data-view="dashboard">Dashboard</button>
+      <button class="nav-item" data-view="cotizaciones">Cotizaciones</button>
+      <button class="nav-item" data-view="nueva">+ Nueva cotización</button>
+      <button class="nav-item disabled">Catálogo de líneas<span class="soon">Pronto</span></button>
+      <button class="nav-item disabled">Inventario<span class="soon">Pronto</span></button>
+      <button class="nav-item disabled">Clientes<span class="soon">Pronto</span></button>
+      <button class="nav-item disabled">Precios<span class="soon">Pronto</span></button>
+      <button class="nav-item disabled">Mi empresa<span class="soon">Pronto</span></button>
+    </nav>
+    <div class="sidebar-plan"><span>Plan</span><span id="sidebarPlanBadge">Gratis</span></div>
+    <button class="nav-item" id="btnSidebarLogout" style="margin-top:6px; color:var(--ink-soft);">Cerrar sesión</button>
+  </aside>
+  <div class="shell-content" id="shellContent">
+    <div id="viewDashboard" class="shell-view"></div>
+    <div id="viewCotizaciones" class="shell-view" style="display:none;"></div>
+  </div>
+</div>
+
+<section class="hero" id="heroSection">
   <div class="hero-inner">
     <h2>Pauta de corte y presupuestos para<br><span class="accent">ventaneros</span>, en minutos.</h2>
     <p>Arma el proyecto completo de una casa, obtén la pauta de corte optimizada por línea de aluminio o PVC, y descarga el presupuesto listo para tu cliente — todo en un solo lugar.</p>
@@ -373,6 +466,77 @@
     </div>
   </div>
 </main>
+
+<section class="faq" id="faqSection">
+  <div class="faq-inner">
+    <h2>Preguntas frecuentes</h2>
+    <div class="faq-item">
+      <h3>¿Qué es una pauta de corte?</h3>
+      <p>Es el listado de medidas exactas que debe tener cada perfil (marco, hoja, junquillo, refuerzos, etc.) para fabricar una ventana o puerta de un tamaño específico, según las fórmulas técnicas del fabricante de la línea de aluminio o PVC.</p>
+    </div>
+    <div class="faq-item">
+      <h3>¿haceventanas.com sirve para aluminio y PVC?</h3>
+      <p>Sí. Incluye líneas de aluminio (como Sodal) y de PVC (como WinHouse S75), y seguimos agregando más marcas con el tiempo.</p>
+    </div>
+    <div class="faq-item">
+      <h3>¿Es gratis?</h3>
+      <p>Sí, puedes usar la calculadora de pauta de corte sin costo y sin necesidad de crear una cuenta. Crear una cuenta gratuita solo es necesario si quieres guardar tus proyectos para volver a ellos más adelante.</p>
+    </div>
+    <div class="faq-item">
+      <h3>¿Cómo optimiza el uso de las barras de aluminio o PVC?</h3>
+      <p>El sistema junta las piezas de todas las ventanas de un mismo proyecto y calcula la forma de distribuirlas en la menor cantidad de barras posible, reduciendo el desperdicio de material comparado con calcular ventana por ventana.</p>
+    </div>
+    <div class="faq-item">
+      <h3>¿Puedo generar un presupuesto para mi cliente?</h3>
+      <p>Sí, defines tus propios precios (materiales, mano de obra, accesorios y margen), y el sistema genera un presupuesto con IVA y descuento, descargable en PDF, listo para enviar.</p>
+    </div>
+    <div class="faq-item">
+      <h3>¿Funciona en el celular?</h3>
+      <p>Sí, haceventanas.com funciona directamente en el navegador de tu computador o celular, sin necesidad de instalar nada.</p>
+    </div>
+  </div>
+</section>
+
+<footer id="mainFooter">© haceventanas.com — Herramienta para ventaneros en Chile</footer>
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "¿Qué es una pauta de corte?",
+      "acceptedAnswer": { "@type": "Answer", "text": "Es el listado de medidas exactas que debe tener cada perfil (marco, hoja, junquillo, refuerzos, etc.) para fabricar una ventana o puerta de un tamaño específico, según las fórmulas técnicas del fabricante de la línea de aluminio o PVC." }
+    },
+    {
+      "@type": "Question",
+      "name": "¿haceventanas.com sirve para aluminio y PVC?",
+      "acceptedAnswer": { "@type": "Answer", "text": "Sí. Incluye líneas de aluminio (como Sodal) y de PVC (como WinHouse S75), y seguimos agregando más marcas con el tiempo." }
+    },
+    {
+      "@type": "Question",
+      "name": "¿Es gratis?",
+      "acceptedAnswer": { "@type": "Answer", "text": "Sí, puedes usar la calculadora de pauta de corte sin costo y sin necesidad de crear una cuenta. Crear una cuenta gratuita solo es necesario si quieres guardar tus proyectos para volver a ellos más adelante." }
+    },
+    {
+      "@type": "Question",
+      "name": "¿Cómo optimiza el uso de las barras de aluminio o PVC?",
+      "acceptedAnswer": { "@type": "Answer", "text": "El sistema junta las piezas de todas las ventanas de un mismo proyecto y calcula la forma de distribuirlas en la menor cantidad de barras posible, reduciendo el desperdicio de material comparado con calcular ventana por ventana." }
+    },
+    {
+      "@type": "Question",
+      "name": "¿Puedo generar un presupuesto para mi cliente?",
+      "acceptedAnswer": { "@type": "Answer", "text": "Sí, defines tus propios precios (materiales, mano de obra, accesorios y margen), y el sistema genera un presupuesto con IVA y descuento, descargable en PDF, listo para enviar." }
+    },
+    {
+      "@type": "Question",
+      "name": "¿Funciona en el celular?",
+      "acceptedAnswer": { "@type": "Answer", "text": "Sí, haceventanas.com funciona directamente en el navegador de tu computador o celular, sin necesidad de instalar nada." }
+    }
+  ]
+}
+</script>
 
 <script>
 // ---------- Datos base (Catálogo Sodal 2026) ----------
@@ -947,6 +1111,156 @@ async function refrescarSesion(){
   renderAuthUI();
   renderListaProyectosGuardados();
   renderResultados();
+  updateLayoutForAuth();
+}
+
+// ---------- Shell de la app (sidebar + Dashboard + Cotizaciones) ----------
+let vistaActual = 'dashboard';
+
+function updateLayoutForAuth(){
+  const shell = document.getElementById('appShell');
+  const hero = document.getElementById('heroSection');
+  const faq = document.getElementById('faqSection');
+  const foot = document.getElementById('mainFooter');
+  const appMainEl = document.getElementById('appMain');
+  const shellContent = document.getElementById('shellContent');
+
+  if (sbUser){
+    shell.style.display = 'flex';
+    hero.style.display = 'none';
+    faq.style.display = 'none';
+    foot.style.display = 'none';
+    document.getElementById('sidebarPlanBadge').textContent = planActual === 'pro' ? 'Pro' : 'Gratis';
+    if (appMainEl.parentElement !== shellContent) shellContent.appendChild(appMainEl);
+    cambiarVista(vistaActual);
+  } else {
+    shell.style.display = 'none';
+    hero.style.display = '';
+    faq.style.display = '';
+    foot.style.display = '';
+    if (appMainEl.parentElement === shellContent) hero.insertAdjacentElement('afterend', appMainEl);
+    appMainEl.style.display = 'grid';
+  }
+}
+
+function cambiarVista(nombre){
+  vistaActual = nombre;
+  document.querySelectorAll('.nav-item[data-view]').forEach(b=> b.classList.toggle('active', b.dataset.view===nombre));
+  document.getElementById('viewDashboard').style.display = nombre==='dashboard' ? 'block' : 'none';
+  document.getElementById('viewCotizaciones').style.display = nombre==='cotizaciones' ? 'block' : 'none';
+  document.getElementById('appMain').style.display = nombre==='nueva' ? 'grid' : 'none';
+  if (nombre==='dashboard') renderDashboardView();
+  if (nombre==='cotizaciones') renderCotizacionesView();
+}
+
+document.querySelectorAll('.nav-item[data-view]').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    const v = btn.dataset.view;
+    if (v === 'nueva' && proyecto.length > 0){
+      if (confirm('¿Empezar una cotización nueva? Se perderá lo que no hayas guardado del proyecto actual.')){
+        proyecto = [];
+        document.getElementById('datCliente').value = '';
+        document.getElementById('datObra').value = '';
+        desbloqueado = false;
+        renderAll();
+      }
+    }
+    cambiarVista(v);
+  });
+});
+document.getElementById('btnSidebarLogout').addEventListener('click', async ()=>{
+  await sbClient.auth.signOut();
+  refrescarSesion();
+});
+
+async function obtenerProyectosUsuario(){
+  const { data, error } = await sbClient.from('projects').select('id,nombre,cliente,obra,data,updated_at').eq('user_id', sbUser.id).order('updated_at', {ascending:false});
+  return (!error && data) ? data : [];
+}
+
+async function renderDashboardView(){
+  const el = document.getElementById('viewDashboard');
+  el.innerHTML = '<div class="empty">Cargando…</div>';
+  const proyectos = await obtenerProyectosUsuario();
+
+  if (proyectos.length === 0){
+    el.innerHTML = `
+      <h2>Dashboard</h2>
+      <p class="sub">Bienvenido a haceventanas.com</p>
+      <div class="dash-empty">
+        <p>Aún no tienes cotizaciones guardadas.<br>Crea la primera para verla reflejada aquí.</p>
+        <button id="btnDashCrear">+ Crear tu primera cotización</button>
+      </div>
+    `;
+    document.getElementById('btnDashCrear').addEventListener('click', ()=>{
+      document.querySelector('.nav-item[data-view="nueva"]').click();
+    });
+    return;
+  }
+
+  const totalVentanas = proyectos.reduce((sum,p)=> sum + (p.data && p.data.proyecto ? p.data.proyecto.reduce((a,it)=>a+(it.cantidad||0),0) : 0), 0);
+  const ultima = new Date(proyectos[0].updated_at).toLocaleDateString('es-CL');
+
+  const filas = proyectos.slice(0,5).map(p=>`
+    <div class="work-row">
+      <div class="w-name"><b>${p.nombre}</b><span>${p.cliente||'Sin cliente'}${p.obra?' · '+p.obra:''}</span></div>
+      <div class="w-date">${new Date(p.updated_at).toLocaleDateString('es-CL')}</div>
+      <button data-id="${p.id}">Abrir</button>
+    </div>
+  `).join('');
+
+  el.innerHTML = `
+    <h2>Dashboard</h2>
+    <p class="sub">Resumen de tu actividad en haceventanas.com</p>
+    <div class="stat-grid">
+      <div class="stat-card"><div class="lbl">Cotizaciones guardadas</div><div class="val">${proyectos.length}</div></div>
+      <div class="stat-card"><div class="lbl">Ventanas cotizadas</div><div class="val">${totalVentanas}</div></div>
+      <div class="stat-card"><div class="lbl">Última actividad</div><div class="val" style="font-size:16px;">${ultima}</div></div>
+    </div>
+    <p style="font-family:var(--mono); font-size:11px; text-transform:uppercase; letter-spacing:.05em; color:var(--ink-soft); margin:0 0 10px;">Trabajos recientes</p>
+    <div class="work-list">${filas}</div>
+  `;
+  el.querySelectorAll('.work-row button').forEach(b=>{
+    b.addEventListener('click', ()=> cargarProyectoDB(b.dataset.id));
+  });
+}
+
+async function renderCotizacionesView(){
+  const el = document.getElementById('viewCotizaciones');
+  el.innerHTML = '<div class="empty">Cargando…</div>';
+  const proyectos = await obtenerProyectosUsuario();
+
+  if (proyectos.length === 0){
+    el.innerHTML = `
+      <h2>Cotizaciones</h2>
+      <p class="sub">Todos tus proyectos guardados</p>
+      <div class="dash-empty"><p>Aún no tienes cotizaciones guardadas.</p></div>
+    `;
+    return;
+  }
+
+  const filas = proyectos.map(p=>{
+    const totalVentanas = p.data && p.data.proyecto ? p.data.proyecto.reduce((a,it)=>a+(it.cantidad||0),0) : 0;
+    return `
+    <div class="work-row">
+      <div class="w-name"><b>${p.nombre}</b><span>${p.cliente||'Sin cliente'}${p.obra?' · '+p.obra:''} · ${totalVentanas} ventanas</span></div>
+      <div class="w-date">${new Date(p.updated_at).toLocaleDateString('es-CL')}</div>
+      <button data-id="${p.id}" class="abrir">Abrir</button>
+      <button data-id="${p.id}" class="borrar">Eliminar</button>
+    </div>`;
+  }).join('');
+
+  el.innerHTML = `
+    <h2>Cotizaciones</h2>
+    <p class="sub">${proyectos.length} proyecto${proyectos.length!==1?'s':''} guardado${proyectos.length!==1?'s':''}</p>
+    <div class="work-list">${filas}</div>
+  `;
+  el.querySelectorAll('.abrir').forEach(b=> b.addEventListener('click', ()=> cargarProyectoDB(b.dataset.id)));
+  el.querySelectorAll('.borrar').forEach(b=> b.addEventListener('click', async ()=>{
+    if (!confirm('¿Eliminar esta cotización? Esta acción no se puede deshacer.')) return;
+    await sbClient.from('projects').delete().eq('id', b.dataset.id);
+    renderCotizacionesView();
+  }));
 }
 
 let authModo = 'login';
@@ -1092,6 +1406,9 @@ async function cargarProyectoDB(id){
   document.getElementById('datObra').value = d.obra||'';
   desbloqueado = false;
   renderAll();
+  if (document.getElementById('appShell').style.display !== 'none'){
+    cambiarVista('nueva');
+  }
 }
 
 // ---------- Formulario "Agregar ventana" ----------
