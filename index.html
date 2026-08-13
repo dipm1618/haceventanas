@@ -335,6 +335,11 @@
   .perfil-tag .p-text{line-height:1.3;}
   .perfil-tag .p-name{font-weight:600; font-size:12.5px; display:block;}
   .perfil-tag .p-code{font-family:var(--mono); font-size:10px; color:var(--ink-soft); display:block;}
+
+  .signup-banner{margin:0 18px 18px; padding:14px 16px; background:var(--blue-soft); border:1px solid var(--blue); display:flex; align-items:center; gap:14px; flex-wrap:wrap;}
+  .signup-banner p{margin:0; font-size:13px; color:var(--ink); flex:1; min-width:200px;}
+  .signup-banner p b{color:var(--blue);}
+  .signup-banner button{flex-shrink:0; padding:9px 18px; border:1px solid var(--blue); background:var(--blue); color:#fff; font-family:var(--sans); font-weight:600; font-size:12.5px; cursor:pointer;}
 </style>
 </head>
 <body>
@@ -385,7 +390,7 @@
 <main id="appMain">
   <div class="left-col">
 
-    <div class="panel">
+    <div class="panel" id="panelCuenta">
       <div class="panel-head"><h2>Tu cuenta</h2><span class="count" id="planBadgeHead"></span></div>
       <div class="control-body" id="authBody"></div>
     </div>
@@ -1039,7 +1044,6 @@ let proyecto = [];
 let nextId = 1;
 let addFormToggles = {};
 let planActual = 'gratis';
-let desbloqueado = false;
 let precios = { perfiles:{}, vidrio:{ Vidrio:0, Termopanel:0 }, manoObra:0, accesorios:0, margen:30, descuento:0, iva:19 };
 
 function clp(n){ return '$' + Math.round(n||0).toLocaleString('es-CL'); }
@@ -1213,7 +1217,6 @@ document.querySelectorAll('.nav-item[data-view]').forEach(btn=>{
         proyecto = [];
         document.getElementById('datCliente').value = '';
         document.getElementById('datObra').value = '';
-        desbloqueado = false;
         renderAll();
       }
     }
@@ -1372,20 +1375,16 @@ function renderAuthUI(){
   }
 
   body.innerHTML = `
-    <p class="gate-sub" style="margin-top:0;">Puedes usar la calculadora sin cuenta. Crea una gratis solo si quieres guardar tus proyectos.</p>
+    <p class="gate-sub" style="margin-top:0;">Crea tu cuenta gratis en 10 segundos para guardar tus proyectos y no perder tu trabajo.</p>
     <div class="gate-toggle">
       <button id="authTabLogin" class="${authModo==='login'?'active':''}">Iniciar sesión</button>
       <button id="authTabSignup" class="${authModo==='signup'?'active':''}">Crear cuenta</button>
     </div>
     <div class="field"><label>Email</label><input type="email" id="authEmail" placeholder="tu@correo.com"></div>
     <div class="field"><label>Contraseña</label><input type="password" id="authPass" placeholder="Mínimo 6 caracteres"></div>
-    <div id="authSignupFields" style="display:${authModo==='signup'?'block':'none'};">
-      <div class="field"><label>Empresa</label><input type="text" id="authEmpresa" placeholder="Nombre de tu empresa"></div>
-      <div class="field"><label>Teléfono</label><input type="text" id="authTelefono" placeholder="+56 9 ..."></div>
-      <div class="field"><label>Dirección</label><input type="text" id="authDireccion" placeholder="Opcional"></div>
-    </div>
     <button class="btn" id="authSubmit">${authModo==='signup'?'Crear cuenta gratis':'Iniciar sesión'}</button>
     <div class="auth-error" id="authError"></div>
+    ${authModo==='signup' ? '<p style="font-size:11px; color:var(--ink-soft); margin:8px 0 0;">Podrás completar los datos de tu empresa después, en "Mi empresa".</p>' : ''}
   `;
 
   document.getElementById('authTabLogin').addEventListener('click', ()=>{ authModo='login'; renderAuthUI(); });
@@ -1403,13 +1402,7 @@ function renderAuthUI(){
       if (error){ errorEl.textContent = error.message; return; }
       refrescarSesion();
     } else {
-      const empresa = document.getElementById('authEmpresa').value.trim();
-      const telefono = document.getElementById('authTelefono').value.trim();
-      const direccion = document.getElementById('authDireccion').value.trim();
-      const { error } = await sbClient.auth.signUp({
-        email, password,
-        options: { data: { empresa, telefono, direccion } }
-      });
+      const { error } = await sbClient.auth.signUp({ email, password });
       if (error){ errorEl.textContent = error.message; return; }
       errorEl.style.color = 'var(--blue)';
       errorEl.textContent = 'Cuenta creada. Revisa tu correo para confirmarla y luego inicia sesión.';
@@ -1490,7 +1483,6 @@ async function cargarProyectoDB(id){
   document.getElementById('datEmpresa').value = d.empresa||'';
   document.getElementById('datCliente').value = d.cliente||'';
   document.getElementById('datObra').value = d.obra||'';
-  desbloqueado = false;
   renderAll();
   if (document.getElementById('appShell').style.display !== 'none'){
     cambiarVista('nueva');
@@ -1553,7 +1545,6 @@ document.getElementById('btnAgregar').addEventListener('click', ()=>{
   if (X<=0 || Y<=0) return;
   if (line.vars.includes('A') && (A<=0 || A>=X)) { alert('El ancho de la hoja angosta debe ser mayor a 0 y menor que el ancho total.'); return; }
   proyecto.push({ id:nextId++, lineaId:line.id, toggles:{...addFormToggles}, X, Y, M, N, A, cantidad });
-  desbloqueado = false;
   renderAll();
 });
 
@@ -1583,12 +1574,10 @@ function renderProyecto(){
     `;
     row.querySelector('.qty-input').addEventListener('input', (e)=>{
       item.cantidad = Math.max(1, parseInt(e.target.value)||1);
-      desbloqueado = false;
       renderAll();
     });
     row.querySelector('.del').addEventListener('click', ()=>{
       proyecto = proyecto.filter(i=>i.id!==item.id);
-      desbloqueado = false;
       renderAll();
     });
     list.appendChild(row);
@@ -1607,51 +1596,56 @@ function renderResultados(){
   const totalUnidades = proyecto.reduce((a,it)=>a+it.cantidad,0);
   resumen.textContent = totalUnidades + ' ventanas totales';
 
-  if (planActual === 'gratis' && !desbloqueado){
-    mostrarGateAnuncio(wrap);
+  if (!sbUser){
+    mostrarGateRegistro(wrap);
     return;
   }
   renderResultadosContenido(wrap);
 }
 
-function mostrarGateAnuncio(wrap){
-  wrap.innerHTML = `
-    <div class="ad-gate">
-      <div class="ad-gate-badge">Plan Gratis</div>
-      <div class="ad-gate-icon">▶</div>
-      <h3>Tu pauta de corte está lista</h3>
-      <p>Mira un anuncio corto para desbloquear la pauta de corte y el optimizador de este proyecto. En el plan Pro esto es instantáneo, sin anuncios.</p>
-      <button class="btn secondary" id="btnVerAnuncio">▶ Ver anuncio y desbloquear</button>
-    </div>
-  `;
-  document.getElementById('btnVerAnuncio').addEventListener('click', reproducirAnuncioSimulado);
-}
-
-function reproducirAnuncioSimulado(){
-  const gate = document.querySelector('.ad-gate');
-  let seg = 5;
-  const total = seg;
-  gate.innerHTML = `
-    <div class="ad-gate-badge">Reproduciendo anuncio…</div>
-    <div class="ad-gate-icon">▶</div>
-    <h3>Anuncio en curso</h3>
-    <div class="ad-mock"><div class="ad-mock-bar" id="adBar"></div></div>
-    <p class="ad-countdown" id="adCountdown">${seg} segundos restantes</p>
-  `;
-  const bar = document.getElementById('adBar');
-  const countdownEl = document.getElementById('adCountdown');
-  const interval = setInterval(()=>{
-    seg -= 1;
-    bar.style.width = ((total-seg)/total*100) + '%';
-    if (seg <= 0){
-      clearInterval(interval);
-      countdownEl.textContent = 'Anuncio completado ✓ Desbloqueando…';
-      desbloqueado = true;
-      setTimeout(renderResultados, 500);
-    } else {
-      countdownEl.textContent = seg + ' segundos restantes';
-    }
-  }, 1000);
+function mostrarGateRegistro(wrap){
+  let modo = 'signup';
+  function pintar(){
+    wrap.innerHTML = `
+      <div class="ad-gate">
+        <div class="ad-gate-badge">Registro requerido</div>
+        <div class="ad-gate-icon">🔒</div>
+        <h3>Regístrate para ver tu pauta de corte</h3>
+        <p>Crea tu cuenta gratis para ver la pauta de corte, el optimizador de barras y el presupuesto de este proyecto — y guardarlo para volver a él cuando quieras.</p>
+        <div class="gate-toggle" style="max-width:280px; margin:0 auto 16px;">
+          <button id="regTabSignup" class="${modo==='signup'?'active':''}">Crear cuenta</button>
+          <button id="regTabLogin" class="${modo==='login'?'active':''}">Iniciar sesión</button>
+        </div>
+        <div style="max-width:280px; margin:0 auto; text-align:left;">
+          <div class="field"><label>Email</label><input type="email" id="regEmail" placeholder="tu@correo.com"></div>
+          <div class="field"><label>Contraseña</label><input type="password" id="regPass" placeholder="Mínimo 6 caracteres"></div>
+          <button class="btn secondary" id="regSubmit" style="width:100%;">${modo==='signup'?'Crear cuenta gratis':'Iniciar sesión'}</button>
+          <div class="auth-error" id="regError"></div>
+        </div>
+      </div>
+    `;
+    document.getElementById('regTabSignup').addEventListener('click', ()=>{ modo='signup'; pintar(); });
+    document.getElementById('regTabLogin').addEventListener('click', ()=>{ modo='login'; pintar(); });
+    document.getElementById('regSubmit').addEventListener('click', async ()=>{
+      const email = document.getElementById('regEmail').value.trim();
+      const password = document.getElementById('regPass').value;
+      const errorEl = document.getElementById('regError');
+      errorEl.style.color = 'var(--orange)';
+      errorEl.textContent = '';
+      if (!email || !password){ errorEl.textContent = 'Completa email y contraseña.'; return; }
+      if (modo === 'signup'){
+        const { error } = await sbClient.auth.signUp({ email, password });
+        if (error){ errorEl.textContent = error.message; return; }
+        errorEl.style.color = 'var(--blue)';
+        errorEl.textContent = 'Cuenta creada. Revisa tu correo para confirmarla y luego inicia sesión.';
+      } else {
+        const { error } = await sbClient.auth.signInWithPassword({ email, password });
+        if (error){ errorEl.textContent = error.message; return; }
+        refrescarSesion();
+      }
+    });
+  }
+  pintar();
 }
 
 function renderResultadosContenido(wrap){
@@ -1886,7 +1880,7 @@ function renderAll(){ renderProyecto(); renderResultados(); }
 // ---------- Exportar PDF ----------
 document.getElementById('btnPDF').addEventListener('click', ()=>{
   if (proyecto.length===0) return;
-  if (planActual==='gratis' && !desbloqueado){
+  if (!sbUser){
     document.getElementById('resultadoWrap').scrollIntoView({behavior:'smooth'});
     return;
   }
