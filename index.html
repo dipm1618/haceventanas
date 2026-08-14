@@ -340,6 +340,18 @@
   .signup-banner p{margin:0; font-size:13px; color:var(--ink); flex:1; min-width:200px;}
   .signup-banner p b{color:var(--blue);}
   .signup-banner button{flex-shrink:0; padding:9px 18px; border:1px solid var(--blue); background:var(--blue); color:#fff; font-family:var(--sans); font-weight:600; font-size:12.5px; cursor:pointer;}
+
+  .country-notice{margin:0 0 22px; padding:12px 14px; background:var(--orange-soft); border:1px solid var(--orange); font-size:12.5px; color:#7A3110; line-height:1.5;}
+  .catalogo-grupo{margin-bottom:26px;}
+  .catalogo-grupo h3{font-family:var(--mono); font-size:11px; text-transform:uppercase; letter-spacing:.05em; color:var(--ink-soft); margin:0 0 8px;}
+  .linea-row{display:flex; align-items:center; gap:12px; padding:11px 14px; border:1px solid var(--line); border-bottom:none; background:var(--panel);}
+  .catalogo-grupo .linea-row:last-child{border-bottom:1px solid var(--line);}
+  .linea-row input[type="checkbox"]{width:16px; height:16px; flex-shrink:0; accent-color:var(--blue);}
+  .linea-row label{flex:1; font-size:13px; cursor:pointer;}
+  .linea-row .badge-recomendada{font-family:var(--mono); font-size:9px; text-transform:uppercase; background:var(--blue-soft); color:var(--blue); padding:2px 7px; flex-shrink:0;}
+  .catalogo-footer{position:sticky; bottom:0; background:var(--panel); border-top:1px solid var(--line); padding:14px 0; margin-top:10px; display:flex; align-items:center; gap:14px;}
+  .catalogo-footer button{padding:11px 22px; border:1px solid var(--ink); background:var(--ink); color:#fff; font-family:var(--sans); font-weight:600; font-size:13px; cursor:pointer;}
+  .catalogo-footer .msg{font-size:12.5px; color:var(--blue);}
 </style>
 </head>
 <body>
@@ -358,7 +370,7 @@
       <button class="nav-item active" data-view="dashboard">Dashboard</button>
       <button class="nav-item" data-view="cotizaciones">Cotizaciones</button>
       <button class="nav-item" data-view="nueva">+ Nueva cotización</button>
-      <button class="nav-item disabled">Catálogo de líneas<span class="soon">Pronto</span></button>
+      <button class="nav-item" data-view="catalogo">Catálogo de líneas</button>
       <button class="nav-item disabled">Inventario<span class="soon">Pronto</span></button>
       <button class="nav-item disabled">Clientes<span class="soon">Pronto</span></button>
       <button class="nav-item disabled">Precios<span class="soon">Pronto</span></button>
@@ -371,6 +383,7 @@
     <div id="viewDashboard" class="shell-view"></div>
     <div id="viewCotizaciones" class="shell-view" style="display:none;"></div>
     <div id="viewEmpresa" class="shell-view" style="display:none;"></div>
+    <div id="viewCatalogo" class="shell-view" style="display:none;"></div>
   </div>
 </div>
 
@@ -492,7 +505,7 @@
     </div>
     <div class="faq-item">
       <h3>¿Es gratis?</h3>
-      <p>Sí, puedes usar la calculadora de pauta de corte sin costo y sin necesidad de crear una cuenta. Crear una cuenta gratuita solo es necesario si quieres guardar tus proyectos para volver a ellos más adelante.</p>
+      <p>Sí. Puedes armar tu proyecto sin costo, y solo necesitas crear una cuenta gratuita (email y contraseña, en 10 segundos) para ver la pauta de corte, el optimizador de barras y el presupuesto.</p>
     </div>
     <div class="faq-item">
       <h3>¿Cómo optimiza el uso de las barras de aluminio o PVC?</h3>
@@ -529,7 +542,7 @@
     {
       "@type": "Question",
       "name": "¿Es gratis?",
-      "acceptedAnswer": { "@type": "Answer", "text": "Sí, puedes usar la calculadora de pauta de corte sin costo y sin necesidad de crear una cuenta. Crear una cuenta gratuita solo es necesario si quieres guardar tus proyectos para volver a ellos más adelante." }
+      "acceptedAnswer": { "@type": "Answer", "text": "Sí. Puedes armar tu proyecto sin costo, y solo necesitas crear una cuenta gratuita (email y contraseña, en 10 segundos) para ver la pauta de corte, el optimizador de barras y el presupuesto." }
     },
     {
       "@type": "Question",
@@ -1154,14 +1167,17 @@ async function refrescarSesion(){
   const { data } = await sbClient.auth.getSession();
   sbUser = data.session ? data.session.user : null;
   if (sbUser){
-    const { data: perfil } = await sbClient.from('profiles').select('plan, empresa').eq('id', sbUser.id).single();
+    const { data: perfil } = await sbClient.from('profiles').select('plan, empresa, lineas_activas').eq('id', sbUser.id).single();
     planActual = (perfil && perfil.plan) || 'gratis';
     if (perfil && perfil.empresa && !document.getElementById('datEmpresa').value){
       document.getElementById('datEmpresa').value = perfil.empresa;
     }
+    lineasActivasUsuario = (perfil && perfil.lineas_activas && perfil.lineas_activas.length > 0) ? perfil.lineas_activas : null;
   } else {
     planActual = 'gratis';
+    lineasActivasUsuario = null;
   }
+  poblarSelectorLineas();
   renderAuthUI();
   renderListaProyectosGuardados();
   renderResultados();
@@ -1203,10 +1219,12 @@ function cambiarVista(nombre){
   document.getElementById('viewDashboard').style.display = nombre==='dashboard' ? 'block' : 'none';
   document.getElementById('viewCotizaciones').style.display = nombre==='cotizaciones' ? 'block' : 'none';
   document.getElementById('viewEmpresa').style.display = nombre==='empresa' ? 'block' : 'none';
+  document.getElementById('viewCatalogo').style.display = nombre==='catalogo' ? 'block' : 'none';
   document.getElementById('appMain').style.display = nombre==='nueva' ? 'grid' : 'none';
   if (nombre==='dashboard') renderDashboardView();
   if (nombre==='cotizaciones') renderCotizacionesView();
   if (nombre==='empresa') renderEmpresaView();
+  if (nombre==='catalogo') renderCatalogoView();
 }
 
 document.querySelectorAll('.nav-item[data-view]').forEach(btn=>{
@@ -1352,6 +1370,79 @@ async function renderEmpresaView(){
   });
 }
 
+// ---------- Catálogo de líneas ----------
+// Detección de país por mejor esfuerzo (idioma/región del navegador). No es geolocalización
+// precisa por IP — es solo una pista para sugerir, nunca para restringir.
+function detectarPaisVisitante(){
+  try{
+    const locale = navigator.language || navigator.userLanguage || '';
+    const partes = locale.split('-');
+    return partes.length > 1 ? partes[1].toUpperCase() : null;
+  }catch(e){ return null; }
+}
+
+// Por ahora todo el catálogo (Sodal, WinHouse) es de mercado chileno.
+// Este mapa queda listo para cuando sumemos líneas de otros países.
+function paisDeLinea(linea){ return 'CL'; }
+
+async function renderCatalogoView(){
+  const el = document.getElementById('viewCatalogo');
+  el.innerHTML = '<div class="empty">Cargando…</div>';
+
+  const { data: perfil } = await sbClient.from('profiles').select('lineas_activas').eq('id', sbUser.id).single();
+  const guardadas = (perfil && perfil.lineas_activas) || [];
+  const seleccionActual = guardadas.length > 0 ? guardadas : LINEAS.map(l=>l.id); // sin personalizar = todas marcadas
+
+  const paisVisitante = detectarPaisVisitante();
+  const avisoPais = (paisVisitante && paisVisitante !== 'CL') ? `
+    <div class="country-notice">
+      🌎 Detectamos que podrías estar visitando desde fuera de Chile. Por ahora nuestro catálogo está enfocado en el mercado chileno (Sodal, WinHouse) — igual puedes explorar y activar las líneas que te sirvan. Iremos sumando líneas de otros países.
+    </div>` : '';
+
+  const gruposCatalogo = [...new Set(LINEAS.map(l=>l.grupo))];
+  const gruposHTML = gruposCatalogo.map(g=>{
+    const filas = LINEAS.filter(l=>l.grupo===g).map(l=>{
+      const marcado = seleccionActual.includes(l.id);
+      const recomendada = paisVisitante && paisDeLinea(l) === paisVisitante;
+      return `
+        <div class="linea-row">
+          <input type="checkbox" id="cat_${l.id}" data-id="${l.id}" ${marcado?'checked':''}>
+          <label for="cat_${l.id}">${l.nombre}</label>
+          ${recomendada ? '<span class="badge-recomendada">Recomendada</span>' : ''}
+        </div>`;
+    }).join('');
+    return `<div class="catalogo-grupo"><h3>${g}</h3>${filas}</div>`;
+  }).join('');
+
+  el.innerHTML = `
+    <h2>Catálogo de líneas</h2>
+    <p class="sub">Elige qué líneas de aluminio y PVC quieres tener disponibles al armar tus cotizaciones. Esto también acota qué perfiles te vamos a pedir cotizar en "Precios".</p>
+    ${avisoPais}
+    ${gruposHTML}
+    <div class="catalogo-footer">
+      <button id="btnGuardarLineas">Guardar selección</button>
+      <button id="btnTodasLineas" style="background:#fff; color:var(--ink); border:1px solid var(--line);">Marcar todas</button>
+      <span class="msg" id="catalogoMsg"></span>
+    </div>
+  `;
+
+  document.getElementById('btnTodasLineas').addEventListener('click', ()=>{
+    el.querySelectorAll('.linea-row input[type="checkbox"]').forEach(cb=> cb.checked = true);
+  });
+
+  document.getElementById('btnGuardarLineas').addEventListener('click', async ()=>{
+    const seleccionadas = [...el.querySelectorAll('.linea-row input[type="checkbox"]:checked')].map(cb=>cb.dataset.id);
+    const msg = document.getElementById('catalogoMsg');
+    if (seleccionadas.length === 0){ msg.style.color='var(--orange)'; msg.textContent='Selecciona al menos una línea.'; return; }
+    const { error } = await sbClient.from('profiles').update({ lineas_activas: seleccionadas }).eq('id', sbUser.id);
+    if (error){ msg.style.color='var(--orange)'; msg.textContent='Error al guardar: '+error.message; return; }
+    lineasActivasUsuario = seleccionadas;
+    poblarSelectorLineas();
+    msg.style.color='var(--blue)';
+    msg.textContent = 'Guardado ✓ — ' + seleccionadas.length + ' línea(s) activa(s)';
+  });
+}
+
 let authModo = 'login';
 
 function renderAuthUI(){
@@ -1491,16 +1582,32 @@ async function cargarProyectoDB(id){
 
 // ---------- Formulario "Agregar ventana" ----------
 const addLineSelect = document.getElementById('addLineSelect');
-const grupos = [...new Set(LINEAS.map(l=>l.grupo))];
-grupos.forEach(g=>{
-  const og = document.createElement('optgroup'); og.label = g;
-  LINEAS.filter(l=>l.grupo===g).forEach(l=>{
-    const opt = document.createElement('option'); opt.value = l.id; opt.textContent = l.nombre;
-    og.appendChild(opt);
+let lineasActivasUsuario = null; // null = sin personalizar (se muestran todas)
+
+function lineasParaMostrar(){
+  return (lineasActivasUsuario && lineasActivasUsuario.length > 0)
+    ? LINEAS.filter(l=>lineasActivasUsuario.includes(l.id))
+    : LINEAS;
+}
+
+function poblarSelectorLineas(){
+  const lista = lineasParaMostrar();
+  const valorPrevio = addLineSelect.value;
+  addLineSelect.innerHTML = '';
+  const gruposDisponibles = [...new Set(lista.map(l=>l.grupo))];
+  gruposDisponibles.forEach(g=>{
+    const og = document.createElement('optgroup'); og.label = g;
+    lista.filter(l=>l.grupo===g).forEach(l=>{
+      const opt = document.createElement('option'); opt.value = l.id; opt.textContent = l.nombre;
+      og.appendChild(opt);
+    });
+    addLineSelect.appendChild(og);
   });
-  addLineSelect.appendChild(og);
-});
-addLineSelect.value = 'S33';
+  const sigueDisponible = lista.some(l=>l.id===valorPrevio);
+  addLineSelect.value = sigueDisponible ? valorPrevio : (lista[0] ? lista[0].id : '');
+  updateAddForm();
+}
+poblarSelectorLineas();
 
 function renderAddToggles(){
   const line = lineaDe(addLineSelect.value);
