@@ -413,7 +413,12 @@
       <div class="control-body">
         <div class="field"><label for="datEmpresa">Tu empresa</label><input type="text" id="datEmpresa" placeholder="Nombre de tu empresa"></div>
         <div class="field"><label for="datCliente">Cliente</label><input type="text" id="datCliente" placeholder="Nombre del cliente"></div>
-        <div class="field" style="margin-bottom:0;"><label for="datObra">Obra / dirección</label><input type="text" id="datObra" placeholder="Ej: Casa Los Aromos 123"></div>
+        <div class="field"><label for="datObra">Obra / dirección</label><input type="text" id="datObra" placeholder="Ej: Casa Los Aromos 123"></div>
+        <div class="dim-row" style="gap:10px; margin-bottom:14px;">
+          <div style="flex:1;"><label style="display:block; font-size:11.5px; font-weight:600; text-transform:uppercase; letter-spacing:.05em; color:var(--ink-soft); margin-bottom:6px;">Forma de entrega</label><input type="text" id="datEntrega" placeholder="Ej: 15 días hábiles"></div>
+          <div style="flex:1;"><label style="display:block; font-size:11.5px; font-weight:600; text-transform:uppercase; letter-spacing:.05em; color:var(--ink-soft); margin-bottom:6px;">Forma de pago</label><input type="text" id="datPago" placeholder="Ej: 50% + 50%"></div>
+        </div>
+        <div class="field" style="margin-bottom:0;"><label for="datNotas">Notas / condiciones (aparece al final del PDF)</label><textarea id="datNotas" rows="2" style="width:100%; padding:10px 12px; border:1px solid var(--line); font-family:var(--sans); font-size:13px; color:var(--ink); resize:vertical;" placeholder="Ej: Precio válido por 15 días. No incluye instalación."></textarea></div>
       </div>
     </div>
 
@@ -475,7 +480,9 @@
         </div>
         <div class="note">Largo de barra comercial · Grosor de sierra (kerf) entre cortes.</div>
         <div style="height:14px;"></div>
-        <button class="btn secondary" id="btnPDF" disabled>Descargar PDF del proyecto</button>
+        <button class="btn secondary" id="btnPDF" disabled>📋 PDF taller (pauta + presupuesto)</button>
+        <div style="height:8px;"></div>
+        <button class="btn" id="btnPDFCliente" disabled>📄 PDF para el cliente</button>
       </div>
     </div>
 
@@ -1663,9 +1670,11 @@ function renderProyecto(){
   if (proyecto.length===0){
     list.innerHTML = '<div class="empty">Aún no agregas ninguna ventana.</div>';
     document.getElementById('btnPDF').disabled = true;
+    document.getElementById('btnPDFCliente').disabled = true;
     return;
   }
   document.getElementById('btnPDF').disabled = false;
+  document.getElementById('btnPDFCliente').disabled = false;
   list.innerHTML = '';
   proyecto.forEach(item=>{
     const line = lineaDe(item.lineaId);
@@ -2144,6 +2153,178 @@ document.getElementById('btnPDF').addEventListener('click', ()=>{
   }
 
   doc.save('pauta-de-corte-proyecto.pdf');
+});
+
+// ---------- PDF de presupuesto para el cliente ----------
+function dibujarDiagramaPDF(doc, x, y, boxW, boxH, ventX, ventY){
+  const ratio = ventX / ventY;
+  let w, h;
+  if (ratio >= 1){ w = boxW; h = boxW / ratio; if (h > boxH){ h = boxH; w = boxH * ratio; } }
+  else { h = boxH; w = boxH * ratio; if (w > boxW){ w = boxW; h = boxW / ratio; } }
+  const ox = x + (boxW - w) / 2;
+  const oy = y + (boxH - h) / 2;
+  doc.setDrawColor(29,78,137);
+  doc.setFillColor(231,238,246);
+  doc.rect(ox, oy, w, h, 'FD');
+  doc.setDrawColor(154,163,172);
+  doc.setLineDashPattern([0.8,0.8], 0);
+  doc.line(ox+2, oy+2, ox+w-2, oy+h-2);
+  doc.line(ox+w-2, oy+2, ox+2, oy+h-2);
+  doc.setLineDashPattern([], 0);
+  doc.setDrawColor(0,0,0);
+}
+
+document.getElementById('btnPDFCliente').addEventListener('click', async ()=>{
+  if (proyecto.length===0) return;
+  if (!sbUser){
+    document.getElementById('resultadoWrap').scrollIntoView({behavior:'smooth'});
+    return;
+  }
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({unit:'mm', format:'a4'});
+  const pageW = 210, marginX = 14;
+
+  const { data: perfilPdf } = await sbClient.from('profiles').select('empresa, telefono, direccion').eq('id', sbUser.id).single();
+  const empresaNombre = document.getElementById('datEmpresa').value.trim() || (perfilPdf && perfilPdf.empresa) || 'Presupuesto';
+  const telefono = (perfilPdf && perfilPdf.telefono) || '';
+  const direccion = (perfilPdf && perfilPdf.direccion) || '';
+  const cliente = document.getElementById('datCliente').value.trim();
+  const obra = document.getElementById('datObra').value.trim();
+  const entrega = document.getElementById('datEntrega').value.trim();
+  const formaPago = document.getElementById('datPago').value.trim();
+  const notas = document.getElementById('datNotas').value.trim();
+  const numeroPresupuesto = 'P-' + new Date().toISOString().slice(0,10).replace(/-/g,'') + '-' + String(Date.now()).slice(-4);
+
+  let y = 18;
+  doc.setFont('helvetica','bold'); doc.setFontSize(15); doc.setTextColor(20,23,26);
+  doc.text(empresaNombre, marginX, y);
+  doc.setFont('helvetica','normal'); doc.setFontSize(9); doc.setTextColor(91,97,104);
+  y += 6;
+  if (direccion){ doc.text(direccion, marginX, y); y += 5; }
+  if (telefono){ doc.text('Tel: ' + telefono, marginX, y); y += 5; }
+  y += 3;
+  doc.setDrawColor(217,220,221); doc.line(marginX, y, pageW-marginX, y);
+  y += 8;
+
+  // Cajas de datos del presupuesto y del cliente, lado a lado
+  const boxTop = y, boxH = 26, boxW = (pageW - marginX*2 - 6) / 2;
+  doc.setDrawColor(217,220,221);
+  doc.rect(marginX, boxTop, boxW, boxH);
+  doc.rect(marginX + boxW + 6, boxTop, boxW, boxH);
+  doc.setFont('helvetica','bold'); doc.setFontSize(8.5); doc.setTextColor(20,23,26);
+  doc.text('DATOS DEL PRESUPUESTO', marginX+3, boxTop+5);
+  doc.text('DATOS DEL CLIENTE', marginX+boxW+9, boxTop+5);
+  doc.setFont('helvetica','normal'); doc.setFontSize(8);
+  doc.text('N°: ' + numeroPresupuesto, marginX+3, boxTop+11);
+  doc.text('Fecha: ' + new Date().toLocaleDateString('es-CL'), marginX+3, boxTop+16);
+  doc.text('Entrega: ' + (entrega||'—'), marginX+3, boxTop+21);
+  doc.text('Cliente: ' + (cliente||'—'), marginX+boxW+9, boxTop+11);
+  doc.text('Obra: ' + (obra||'—'), marginX+boxW+9, boxTop+16);
+  doc.text('Forma de pago: ' + (formaPago||'—'), marginX+boxW+9, boxTop+21);
+  y = boxTop + boxH + 12;
+
+  // Precios: mismo reparto justo que en el presupuesto en pantalla
+  const largoBarraCli = parseFloat(document.getElementById('inputBarra').value) || 6000;
+  const kerfCli = parseFloat(document.getElementById('inputKerf').value) || 0;
+  const consolidadoCli = consolidarProyecto();
+  const gruposCli = agruparPiezasPorCodigo(consolidadoCli.perfiles);
+  const factoresCli = {}, preciosPorMetroCli = {};
+  Object.keys(gruposCli).forEach(codigo=>{
+    const barras = optimizarBarras(gruposCli[codigo], largoBarraCli, kerfCli);
+    const precioBarra = precios.perfiles[codigo]||0;
+    const realCosto = barras.length * precioBarra;
+    const totalLinealM = gruposCli[codigo].reduce((a,b)=>a+b,0)/1000;
+    const precioMetro = precioBarra / (largoBarraCli/1000);
+    preciosPorMetroCli[codigo] = precioMetro;
+    const costoLinealTeorico = totalLinealM * precioMetro;
+    factoresCli[codigo] = costoLinealTeorico>0 ? realCosto/costoLinealTeorico : 1;
+  });
+  function costoUnitCli(item){
+    let cp = 0;
+    calcularItemPerfiles(item).forEach(p=>{ cp += (p.largo/1000)*p.cantidad*(preciosPorMetroCli[p.codigo]||0)*(factoresCli[p.codigo]||1); });
+    let cv = 0;
+    calcularItemVidrio(item).forEach(v=>{ cv += (v.ancho/1000)*(v.alto/1000)*v.cantidad*(precios.vidrio[v.tipo]||0); });
+    return cp + cv + (precios.manoObra||0) + (precios.accesorios||0);
+  }
+
+  let sumaNetaCli = 0;
+  proyecto.forEach((item, idx)=>{
+    const line = lineaDe(item.lineaId);
+    const vidrios = calcularItemVidrio(item);
+    const precioUnit = costoUnitCli(item) * (1+(precios.margen||0)/100);
+    const totalItem = precioUnit * item.cantidad;
+    sumaNetaCli += totalItem;
+
+    if (y > 230){ doc.addPage(); y = 18; }
+
+    const diagBoxY = y;
+    dibujarDiagramaPDF(doc, marginX, diagBoxY, 42, 42, item.X, item.Y);
+    doc.setFont('helvetica','bold'); doc.setFontSize(11); doc.setTextColor(20,23,26);
+    doc.text(line.nombre, marginX+50, y+5);
+    doc.setFont('helvetica','normal'); doc.setFontSize(8.5); doc.setTextColor(60,64,68);
+    let ly = y+11;
+    const bullets = [
+      'Medida: ' + item.X + ' x ' + item.Y + ' mm',
+    ];
+    if (vidrios.length){
+      const tipoV = line.vidrio ? 'Vidrio' : 'Termopanel';
+      vidrios.forEach(v=> bullets.push(tipoV + ': ' + (v.ancho/1000).toFixed(3) + ' x ' + (v.alto/1000).toFixed(3) + ' m'));
+    }
+    const variantesTxt = Object.keys(item.toggles||{}).filter(k=>item.toggles[k]).map(k=>TOGGLE_LABELS[k]||k).join(', ');
+    if (variantesTxt) bullets.push('Variante: ' + variantesTxt);
+    bullets.forEach(b=>{ doc.text('• ' + b, marginX+50, ly); ly += 4.5; });
+
+    doc.autoTable({
+      startY: Math.max(ly+2, y+42),
+      margin:{left:marginX, right:marginX},
+      head:[['Cantidad','Valor unitario','Total']],
+      body:[[item.cantidad, '$'+Math.round(precioUnit).toLocaleString('es-CL'), '$'+Math.round(totalItem).toLocaleString('es-CL')]],
+      styles:{fontSize:8.5}, headStyles:{fillColor:[29,78,137], textColor:255},
+      tableWidth: pageW - marginX*2 - 50, 
+      margin:{left:marginX+50, right:marginX},
+    });
+    y = doc.lastAutoTable.finalY + 10;
+    doc.setDrawColor(230,230,230);
+    doc.line(marginX, y-4, pageW-marginX, y-4);
+  });
+
+  const montoDtoCli = sumaNetaCli * ((precios.descuento||0)/100);
+  const netoDtoCli = sumaNetaCli - montoDtoCli;
+  const montoIVACli = netoDtoCli * ((precios.iva||0)/100);
+  const totalIVACli = netoDtoCli + montoIVACli;
+  const totalVentanasCli = proyecto.reduce((a,it)=>a+it.cantidad,0);
+
+  if (y > 235){ doc.addPage(); y = 18; }
+  doc.autoTable({
+    startY:y,
+    margin:{left:marginX, right:marginX},
+    head:[['Cant. de ventanas','Suma total neta','Descuento','IVA','Total con IVA']],
+    body:[[
+      totalVentanasCli,
+      '$'+Math.round(sumaNetaCli).toLocaleString('es-CL'),
+      (precios.descuento||0)+'% ($'+Math.round(montoDtoCli).toLocaleString('es-CL')+')',
+      (precios.iva||0)+'% ($'+Math.round(montoIVACli).toLocaleString('es-CL')+')',
+      '$'+Math.round(totalIVACli).toLocaleString('es-CL'),
+    ]],
+    styles:{fontSize:9}, headStyles:{fillColor:[20,23,26], textColor:255},
+    columnStyles:{4:{fontStyle:'bold', textColor:[225,96,28]}},
+  });
+  y = doc.lastAutoTable.finalY + 12;
+
+  if (notas){
+    if (y > 260){ doc.addPage(); y = 18; }
+    doc.setFont('helvetica','bold'); doc.setFontSize(9); doc.setTextColor(20,23,26);
+    doc.text('Condiciones:', marginX, y); y += 5;
+    doc.setFont('helvetica','normal'); doc.setFontSize(8.5); doc.setTextColor(60,64,68);
+    const lineasNota = doc.splitTextToSize(notas, pageW - marginX*2);
+    doc.text(lineasNota, marginX, y);
+    y += lineasNota.length * 4.5 + 8;
+  }
+
+  doc.setFont('helvetica','normal'); doc.setFontSize(8); doc.setTextColor(91,97,104);
+  doc.text('Documento emitido por ' + empresaNombre + (telefono?(' · '+telefono):''), marginX, y);
+
+  doc.save('presupuesto-cliente.pdf');
 });
 
 document.getElementById('inputBarra').addEventListener('input', renderResultados);
