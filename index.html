@@ -1182,56 +1182,101 @@ function optimizarBarras(piezas, largoBarra, kerf){
 }
 
 // ---------- Diagrama tipo plano ----------
-function contenidoVentanaSVG(tipo, ox, oy, w, h, paneles){
-  const stroke = '#1D4E89', fill = '#E7EEF6', dash = '#9AA3AC';
-  let inner = `<rect x="${ox}" y="${oy}" width="${w}" height="${h}" fill="${fill}" stroke="${stroke}" stroke-width="2"/>`;
-
-  if (tipo === 'corredera' || tipo === 'puerta_corredera'){
-    const n = paneles || 2;
-    for (let i=1; i<n; i++){
-      const px = ox + (w/n)*i;
-      inner += `<line x1="${px}" y1="${oy}" x2="${px}" y2="${oy+h}" stroke="${stroke}" stroke-width="1.5"/>`;
-    }
-    for (let i=0; i<n; i++){
-      const cx = ox + (w/n)*(i+0.5);
-      const cy = oy + h/2;
-      const dir = i%2===0 ? 1 : -1;
-      const len = Math.min(w/n*0.34, 16);
-      const x1 = cx - dir*len/2, x2 = cx + dir*len/2;
-      const ah = 3.5;
-      inner += `<line x1="${x1}" y1="${cy}" x2="${x2}" y2="${cy}" stroke="${stroke}" stroke-width="1.5"/>`;
-      inner += `<line x1="${x2}" y1="${cy}" x2="${x2-dir*ah}" y2="${cy-ah}" stroke="${stroke}" stroke-width="1.5"/>`;
-      inner += `<line x1="${x2}" y1="${cy}" x2="${x2-dir*ah}" y2="${cy+ah}" stroke="${stroke}" stroke-width="1.5"/>`;
-    }
-  } else if (tipo === 'proyectante'){
-    const m = Math.min(w,h)*0.16;
-    inner += `<path d="M ${ox+m} ${oy+m} L ${ox+w-m} ${oy+m} L ${ox+w/2} ${oy+h-m} Z" fill="none" stroke="${dash}" stroke-width="1.2" stroke-dasharray="3,3"/>`;
-    inner += `<line x1="${ox+w/2-10}" y1="${oy+h-8}" x2="${ox+w/2+10}" y2="${oy+h-8}" stroke="${stroke}" stroke-width="2"/>`;
-  } else if (tipo === 'puerta_abatir'){
-    const r = Math.min(w,h)*0.75;
-    inner += `<path d="M ${ox+w} ${oy} L ${ox+w} ${oy+h} A ${r} ${r} 0 0 0 ${Math.max(ox, ox+w-r)} ${oy+h-Math.min(r,h)}" fill="none" stroke="${dash}" stroke-width="1" stroke-dasharray="3,3"/>`;
-    inner += `<circle cx="${ox+w-10}" cy="${oy+h/2}" r="2.6" fill="${stroke}"/>`;
-  } else {
-    inner += `<line x1="${ox+w*0.12}" y1="${oy+h*0.12}" x2="${ox+w*0.88}" y2="${oy+h*0.88}" stroke="${dash}" stroke-width="1" stroke-dasharray="3,3"/>`;
-  }
-  return inner;
-}
-
 function drawDiagram(svgId, X, Y, tipo, paneles){
   const svg = document.getElementById(svgId);
   const vb = svg.viewBox.baseVal;
   const W = vb.width, H = vb.height;
-  const maxDim = Math.min(W,H) - 70;
+  tipo = tipo || 'fijo';
+  const n = paneles || 2;
+  const esCorredera = (tipo==='corredera' || tipo==='puerta_corredera') && n>1;
+
+  const leftM = 42, rightM = 12, topM = 12;
+  const bottomM = esCorredera ? 46 : 30;
+  const availW = W-leftM-rightM, availH = H-topM-bottomM;
   const ratio = X/Y;
   let w, h;
-  if (ratio >= 1){ w = maxDim; h = maxDim/ratio; } else { h = maxDim; w = maxDim*ratio; }
-  const ox = (W-w)/2, oy = 34;
+  if (ratio >= availW/availH){ w = availW; h = availW/ratio; } else { h = availH; w = availH*ratio; }
+  const ox = leftM + (availW-w)/2;
+  const oy = topM + (availH-h)/2;
+
+  const frameColor = '#1D4E89', glassColor = '#BFE0F2', dash = '#5B6168';
+  const frameW = Math.max(3, Math.min(w,h)*0.045);
+
+  let glass = '', panelWidths = [];
+  if (esCorredera){
+    const cellW = w/n;
+    for (let i=0;i<n;i++){
+      const gx = ox+cellW*i+frameW, gw = cellW-2*frameW;
+      glass += `<rect x="${gx}" y="${oy+frameW}" width="${gw}" height="${h-2*frameW}" fill="${glassColor}"/>`;
+      panelWidths.push(Math.round(X/n));
+    }
+  } else {
+    glass = `<rect x="${ox+frameW}" y="${oy+frameW}" width="${w-2*frameW}" height="${h-2*frameW}" fill="${glassColor}"/>`;
+    panelWidths = [X];
+  }
+
+  let symbols = '';
+  if (esCorredera){
+    const cellW = w/n;
+    for (let i=0;i<n;i++){
+      const cx = ox+cellW*(i+0.5), cy = oy+h/2;
+      const dir = i%2===0 ? 1 : -1;
+      const len = Math.min(cellW*0.4, 20);
+      const x1 = cx-dir*len/2, x2 = cx+dir*len/2, ah = 4;
+      symbols += `<line x1="${x1}" y1="${cy}" x2="${x2}" y2="${cy}" stroke="${frameColor}" stroke-width="2"/>
+        <line x1="${x2}" y1="${cy}" x2="${x2-dir*ah}" y2="${cy-ah}" stroke="${frameColor}" stroke-width="2"/>
+        <line x1="${x2}" y1="${cy}" x2="${x2-dir*ah}" y2="${cy+ah}" stroke="${frameColor}" stroke-width="2"/>`;
+    }
+  } else if (tipo === 'proyectante'){
+    const portrait = h > w;
+    const m = Math.min(w,h)*0.12;
+    if (portrait){
+      const apexX = ox+w-m, apexY = oy+h/2;
+      symbols += `<line x1="${ox+m}" y1="${oy+m}" x2="${apexX}" y2="${apexY}" stroke="${dash}" stroke-width="1.2" stroke-dasharray="3,3"/>
+        <line x1="${ox+m}" y1="${oy+h-m}" x2="${apexX}" y2="${apexY}" stroke="${dash}" stroke-width="1.2" stroke-dasharray="3,3"/>
+        <circle cx="${ox+w-frameW-3}" cy="${oy+h/2}" r="2.6" fill="${frameColor}"/>`;
+    } else {
+      const apexX = ox+w/2, apexY = oy+h-m;
+      symbols += `<line x1="${ox+m}" y1="${oy+m}" x2="${apexX}" y2="${apexY}" stroke="${dash}" stroke-width="1.2" stroke-dasharray="3,3"/>
+        <line x1="${ox+w-m}" y1="${oy+m}" x2="${apexX}" y2="${apexY}" stroke="${dash}" stroke-width="1.2" stroke-dasharray="3,3"/>
+        <line x1="${ox+w/2-10}" y1="${oy+h-frameW-3}" x2="${ox+w/2+10}" y2="${oy+h-frameW-3}" stroke="${frameColor}" stroke-width="2"/>`;
+    }
+  } else if (tipo === 'puerta_abatir'){
+    symbols += `<line x1="${ox+w-frameW-2}" y1="${oy+frameW+2}" x2="${ox+frameW+2}" y2="${oy+h-frameW-2}" stroke="${dash}" stroke-width="1.2" stroke-dasharray="3,3"/>
+      <circle cx="${ox+w-frameW-4}" cy="${oy+h/2}" r="2.6" fill="${frameColor}"/>`;
+  }
+
+  let dims = `
+    <line x1="${leftM-14}" y1="${oy}" x2="${leftM-14}" y2="${oy+h}" stroke="#5B6168" stroke-width="1"/>
+    <line x1="${leftM-18}" y1="${oy}" x2="${leftM-10}" y2="${oy}" stroke="#5B6168" stroke-width="1"/>
+    <line x1="${leftM-18}" y1="${oy+h}" x2="${leftM-10}" y2="${oy+h}" stroke="#5B6168" stroke-width="1"/>
+    <text x="${leftM-20}" y="${oy+h/2}" text-anchor="end" dominant-baseline="middle" font-family="IBM Plex Mono" font-size="10" fill="#14171A">${Y}</text>
+  `;
+  let by = oy+h+14;
+  if (panelWidths.length>1){
+    let cursorX = ox;
+    const cellW = w/n;
+    dims += `<line x1="${ox}" y1="${by}" x2="${ox+w}" y2="${by}" stroke="#9AA3AC" stroke-width="0.6"/>`;
+    panelWidths.forEach(pw=>{
+      dims += `<line x1="${cursorX}" y1="${by-3}" x2="${cursorX}" y2="${by+3}" stroke="#5B6168" stroke-width="1"/>
+        <text x="${cursorX+cellW/2}" y="${by-5}" text-anchor="middle" font-family="IBM Plex Mono" font-size="8.5" fill="#5B6168">${pw}</text>`;
+      cursorX += cellW;
+    });
+    dims += `<line x1="${cursorX}" y1="${by-3}" x2="${cursorX}" y2="${by+3}" stroke="#5B6168" stroke-width="1"/>`;
+    by += 16;
+  }
+  dims += `
+    <line x1="${ox}" y1="${by}" x2="${ox+w}" y2="${by}" stroke="#5B6168" stroke-width="1"/>
+    <line x1="${ox}" y1="${by-4}" x2="${ox}" y2="${by+4}" stroke="#5B6168" stroke-width="1"/>
+    <line x1="${ox+w}" y1="${by-4}" x2="${ox+w}" y2="${by+4}" stroke="#5B6168" stroke-width="1"/>
+    <text x="${ox+w/2}" y="${by+14}" text-anchor="middle" font-family="IBM Plex Mono" font-size="10" fill="#14171A">${X}</text>
+  `;
+
   svg.innerHTML = `
-    ${contenidoVentanaSVG(tipo||'fijo', ox, oy, w, h, paneles)}
-    <line x1="${ox}" y1="${oy-12}" x2="${ox+w}" y2="${oy-12}" stroke="#5B6168" stroke-width="1"/>
-    <text x="${ox+w/2}" y="${oy-18}" text-anchor="middle" font-family="IBM Plex Mono" font-size="10.5" fill="#14171A">X = ${X} mm</text>
-    <line x1="${ox+w+12}" y1="${oy}" x2="${ox+w+12}" y2="${oy+h}" stroke="#5B6168" stroke-width="1"/>
-    <text x="${ox+w+20}" y="${oy+h/2}" font-family="IBM Plex Mono" font-size="10.5" fill="#14171A" transform="rotate(90 ${ox+w+20} ${oy+h/2})" text-anchor="middle">Y = ${Y} mm</text>
+    <rect x="${ox}" y="${oy}" width="${w}" height="${h}" fill="${frameColor}"/>
+    ${glass}
+    ${symbols}
+    ${dims}
   `;
 }
 
@@ -2108,51 +2153,60 @@ function dibujarDiagramaPDF(doc, x, y, boxW, boxH, ventX, ventY, tipo, paneles){
   else { h = boxH; w = boxH * ratio; if (w > boxW){ w = boxW; h = boxW / ratio; } }
   const ox = x + (boxW - w) / 2;
   const oy = y + (boxH - h) / 2;
+  const n = paneles || 2;
+  const esCorredera = (tipo === 'corredera' || tipo === 'puerta_corredera') && n > 1;
+  const frameW = Math.max(0.8, Math.min(w,h)*0.06);
 
-  doc.setDrawColor(29,78,137);
-  doc.setFillColor(231,238,246);
-  doc.rect(ox, oy, w, h, 'FD');
-  doc.setDrawColor(154,163,172);
+  doc.setFillColor(29,78,137);
+  doc.rect(ox, oy, w, h, 'F');
+  doc.setFillColor(191,224,242);
 
-  if (tipo === 'corredera' || tipo === 'puerta_corredera'){
-    const n = paneles || 2;
-    doc.setDrawColor(29,78,137);
-    for (let i=1; i<n; i++){
-      const px = ox + (w/n)*i;
-      doc.line(px, oy, px, oy+h);
-    }
+  if (esCorredera){
+    const cellW = w/n;
     for (let i=0; i<n; i++){
-      const cx = ox + (w/n)*(i+0.5);
+      const gx = ox+cellW*i+frameW;
+      doc.rect(gx, oy+frameW, cellW-2*frameW, h-2*frameW, 'F');
+    }
+    doc.setDrawColor(29,78,137);
+    for (let i=0; i<n; i++){
+      const cx = ox + cellW*(i+0.5);
       const cy = oy + h/2;
       const dir = i%2===0 ? 1 : -1;
-      const len = Math.min(w/n*0.3, 6);
+      const len = Math.min(cellW*0.35, 5);
       const x1 = cx - dir*len/2, x2 = cx + dir*len/2;
-      const ah = 1.3;
+      const ah = 1.1;
       doc.line(x1, cy, x2, cy);
       doc.line(x2, cy, x2-dir*ah, cy-ah);
       doc.line(x2, cy, x2-dir*ah, cy+ah);
     }
-  } else if (tipo === 'proyectante'){
-    const m = Math.min(w,h)*0.16;
-    const ax=ox+m, ay=oy+m, bx=ox+w-m, by=oy+m, cx2=ox+w/2, cy2=oy+h-m;
-    doc.setLineDashPattern([0.8,0.8], 0);
-    doc.line(ax, ay, bx, by);
-    doc.line(bx, by, cx2, cy2);
-    doc.line(cx2, cy2, ax, ay);
-    doc.setLineDashPattern([], 0);
-    doc.setDrawColor(29,78,137);
-    doc.line(ox+w/2-4, oy+h-3, ox+w/2+4, oy+h-3);
-  } else if (tipo === 'puerta_abatir'){
-    doc.setLineDashPattern([0.8,0.8], 0);
-    doc.line(ox+w, oy, ox+2, oy+h);
-    doc.setLineDashPattern([], 0);
-    doc.setFillColor(29,78,137);
-    doc.circle(ox+w-2, oy+h/2, 0.8, 'F');
   } else {
-    doc.setLineDashPattern([0.8,0.8], 0);
-    doc.line(ox+2, oy+2, ox+w-2, oy+h-2);
-    doc.line(ox+w-2, oy+2, ox+2, oy+h-2);
-    doc.setLineDashPattern([], 0);
+    doc.rect(ox+frameW, oy+frameW, w-2*frameW, h-2*frameW, 'F');
+    if (tipo === 'proyectante'){
+      const portrait = h > w;
+      const m = Math.min(w,h)*0.14;
+      doc.setDrawColor(154,163,172);
+      doc.setLineDashPattern([0.6,0.6], 0);
+      if (portrait){
+        const apexX = ox+w-m, apexY = oy+h/2;
+        doc.line(ox+m, oy+m, apexX, apexY);
+        doc.line(ox+m, oy+h-m, apexX, apexY);
+      } else {
+        const apexX = ox+w/2, apexY = oy+h-m;
+        doc.line(ox+m, oy+m, apexX, apexY);
+        doc.line(ox+w-m, oy+m, apexX, apexY);
+      }
+      doc.setLineDashPattern([], 0);
+      doc.setDrawColor(29,78,137);
+      doc.line(ox+w/2-3, oy+h-frameW-1, ox+w/2+3, oy+h-frameW-1);
+    } else if (tipo === 'puerta_abatir'){
+      doc.setDrawColor(154,163,172);
+      doc.setLineDashPattern([0.6,0.6], 0);
+      doc.line(ox+w-frameW-0.5, oy+frameW+0.5, ox+frameW+0.5, oy+h-frameW-0.5);
+      doc.setLineDashPattern([], 0);
+      doc.setFillColor(29,78,137);
+      doc.circle(ox+w-frameW-1.5, oy+h/2, 0.7, 'F');
+    }
+    // fijo: vidrio liso, sin marcas
   }
   doc.setDrawColor(0,0,0);
 }
