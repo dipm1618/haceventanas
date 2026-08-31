@@ -1093,6 +1093,22 @@ function clp(n){ return '$' + Math.round(n||0).toLocaleString('es-CL'); }
 
 function lineaDe(id){ return LINEAS.find(l=>l.id===id); }
 
+function tipoAperturaDeLinea(line){
+  const t = ((line.grupo||'') + ' ' + (line.nombre||'')).toLowerCase();
+  if (t.includes('puerta')) return t.includes('corredera') ? 'puerta_corredera' : 'puerta_abatir';
+  if (t.includes('corredera') || t.includes('riel') || t.includes('multi slide')) return 'corredera';
+  if (t.includes('proyectante') || t.includes('abatible') || t.includes('abatir')) return 'proyectante';
+  return 'fijo';
+}
+
+function panelesDeLinea(line){
+  const n = (line.nombre||'').toLowerCase();
+  if (n.includes('8 hojas')) return 8;
+  if (n.includes('4 hojas') || n.includes('cuatro hojas')) return 4;
+  if (n.includes('3 hojas') || n.includes('tres hojas') || n.includes('triple')) return 3;
+  return 2;
+}
+
 function calcularItemPerfiles(item){
   const line = lineaDe(item.lineaId);
   const vars = {X:item.X, Y:item.Y, M:item.M||0, N:item.N||0, A:item.A||0};
@@ -1166,7 +1182,42 @@ function optimizarBarras(piezas, largoBarra, kerf){
 }
 
 // ---------- Diagrama tipo plano ----------
-function drawDiagram(svgId, X, Y){
+function contenidoVentanaSVG(tipo, ox, oy, w, h, paneles){
+  const stroke = '#1D4E89', fill = '#E7EEF6', dash = '#9AA3AC';
+  let inner = `<rect x="${ox}" y="${oy}" width="${w}" height="${h}" fill="${fill}" stroke="${stroke}" stroke-width="2"/>`;
+
+  if (tipo === 'corredera' || tipo === 'puerta_corredera'){
+    const n = paneles || 2;
+    for (let i=1; i<n; i++){
+      const px = ox + (w/n)*i;
+      inner += `<line x1="${px}" y1="${oy}" x2="${px}" y2="${oy+h}" stroke="${stroke}" stroke-width="1.5"/>`;
+    }
+    for (let i=0; i<n; i++){
+      const cx = ox + (w/n)*(i+0.5);
+      const cy = oy + h/2;
+      const dir = i%2===0 ? 1 : -1;
+      const len = Math.min(w/n*0.34, 16);
+      const x1 = cx - dir*len/2, x2 = cx + dir*len/2;
+      const ah = 3.5;
+      inner += `<line x1="${x1}" y1="${cy}" x2="${x2}" y2="${cy}" stroke="${stroke}" stroke-width="1.5"/>`;
+      inner += `<line x1="${x2}" y1="${cy}" x2="${x2-dir*ah}" y2="${cy-ah}" stroke="${stroke}" stroke-width="1.5"/>`;
+      inner += `<line x1="${x2}" y1="${cy}" x2="${x2-dir*ah}" y2="${cy+ah}" stroke="${stroke}" stroke-width="1.5"/>`;
+    }
+  } else if (tipo === 'proyectante'){
+    const m = Math.min(w,h)*0.16;
+    inner += `<path d="M ${ox+m} ${oy+m} L ${ox+w-m} ${oy+m} L ${ox+w/2} ${oy+h-m} Z" fill="none" stroke="${dash}" stroke-width="1.2" stroke-dasharray="3,3"/>`;
+    inner += `<line x1="${ox+w/2-10}" y1="${oy+h-8}" x2="${ox+w/2+10}" y2="${oy+h-8}" stroke="${stroke}" stroke-width="2"/>`;
+  } else if (tipo === 'puerta_abatir'){
+    const r = Math.min(w,h)*0.75;
+    inner += `<path d="M ${ox+w} ${oy} L ${ox+w} ${oy+h} A ${r} ${r} 0 0 0 ${Math.max(ox, ox+w-r)} ${oy+h-Math.min(r,h)}" fill="none" stroke="${dash}" stroke-width="1" stroke-dasharray="3,3"/>`;
+    inner += `<circle cx="${ox+w-10}" cy="${oy+h/2}" r="2.6" fill="${stroke}"/>`;
+  } else {
+    inner += `<line x1="${ox+w*0.12}" y1="${oy+h*0.12}" x2="${ox+w*0.88}" y2="${oy+h*0.88}" stroke="${dash}" stroke-width="1" stroke-dasharray="3,3"/>`;
+  }
+  return inner;
+}
+
+function drawDiagram(svgId, X, Y, tipo, paneles){
   const svg = document.getElementById(svgId);
   const vb = svg.viewBox.baseVal;
   const W = vb.width, H = vb.height;
@@ -1176,13 +1227,11 @@ function drawDiagram(svgId, X, Y){
   if (ratio >= 1){ w = maxDim; h = maxDim/ratio; } else { h = maxDim; w = maxDim*ratio; }
   const ox = (W-w)/2, oy = 34;
   svg.innerHTML = `
-    <rect x="${ox}" y="${oy}" width="${w}" height="${h}" fill="#E7EEF6" stroke="#1D4E89" stroke-width="2"/>
+    ${contenidoVentanaSVG(tipo||'fijo', ox, oy, w, h, paneles)}
     <line x1="${ox}" y1="${oy-12}" x2="${ox+w}" y2="${oy-12}" stroke="#5B6168" stroke-width="1"/>
     <text x="${ox+w/2}" y="${oy-18}" text-anchor="middle" font-family="IBM Plex Mono" font-size="10.5" fill="#14171A">X = ${X} mm</text>
     <line x1="${ox+w+12}" y1="${oy}" x2="${ox+w+12}" y2="${oy+h}" stroke="#5B6168" stroke-width="1"/>
     <text x="${ox+w+20}" y="${oy+h/2}" font-family="IBM Plex Mono" font-size="10.5" fill="#14171A" transform="rotate(90 ${ox+w+20} ${oy+h/2})" text-anchor="middle">Y = ${Y} mm</text>
-    <line x1="${ox+14}" y1="${oy+14}" x2="${ox+w-14}" y2="${oy+h-14}" stroke="#9AA3AC" stroke-width="1" stroke-dasharray="3,3"/>
-    <line x1="${ox+w-14}" y1="${oy+14}" x2="${ox+14}" y2="${oy+h-14}" stroke="#9AA3AC" stroke-width="1" stroke-dasharray="3,3"/>
   `;
 }
 
@@ -1683,7 +1732,7 @@ function updateAddForm(){
   renderAddToggles();
   const X = parseFloat(document.getElementById('addX').value)||0;
   const Y = parseFloat(document.getElementById('addY').value)||0;
-  drawDiagram('diagramAdd', X, Y);
+  drawDiagram('diagramAdd', X, Y, tipoAperturaDeLinea(line), panelesDeLinea(line));
 }
 addLineSelect.addEventListener('change', ()=>{ addFormToggles={}; updateAddForm(); });
 document.getElementById('addX').addEventListener('input', updateAddForm);
@@ -2052,21 +2101,59 @@ document.getElementById('btnPDF').addEventListener('click', ()=>{
 });
 
 // ---------- PDF de presupuesto para el cliente ----------
-function dibujarDiagramaPDF(doc, x, y, boxW, boxH, ventX, ventY){
+function dibujarDiagramaPDF(doc, x, y, boxW, boxH, ventX, ventY, tipo, paneles){
   const ratio = ventX / ventY;
   let w, h;
   if (ratio >= 1){ w = boxW; h = boxW / ratio; if (h > boxH){ h = boxH; w = boxH * ratio; } }
   else { h = boxH; w = boxH * ratio; if (w > boxW){ w = boxW; h = boxW / ratio; } }
   const ox = x + (boxW - w) / 2;
   const oy = y + (boxH - h) / 2;
+
   doc.setDrawColor(29,78,137);
   doc.setFillColor(231,238,246);
   doc.rect(ox, oy, w, h, 'FD');
   doc.setDrawColor(154,163,172);
-  doc.setLineDashPattern([0.8,0.8], 0);
-  doc.line(ox+2, oy+2, ox+w-2, oy+h-2);
-  doc.line(ox+w-2, oy+2, ox+2, oy+h-2);
-  doc.setLineDashPattern([], 0);
+
+  if (tipo === 'corredera' || tipo === 'puerta_corredera'){
+    const n = paneles || 2;
+    doc.setDrawColor(29,78,137);
+    for (let i=1; i<n; i++){
+      const px = ox + (w/n)*i;
+      doc.line(px, oy, px, oy+h);
+    }
+    for (let i=0; i<n; i++){
+      const cx = ox + (w/n)*(i+0.5);
+      const cy = oy + h/2;
+      const dir = i%2===0 ? 1 : -1;
+      const len = Math.min(w/n*0.3, 6);
+      const x1 = cx - dir*len/2, x2 = cx + dir*len/2;
+      const ah = 1.3;
+      doc.line(x1, cy, x2, cy);
+      doc.line(x2, cy, x2-dir*ah, cy-ah);
+      doc.line(x2, cy, x2-dir*ah, cy+ah);
+    }
+  } else if (tipo === 'proyectante'){
+    const m = Math.min(w,h)*0.16;
+    const ax=ox+m, ay=oy+m, bx=ox+w-m, by=oy+m, cx2=ox+w/2, cy2=oy+h-m;
+    doc.setLineDashPattern([0.8,0.8], 0);
+    doc.line(ax, ay, bx, by);
+    doc.line(bx, by, cx2, cy2);
+    doc.line(cx2, cy2, ax, ay);
+    doc.setLineDashPattern([], 0);
+    doc.setDrawColor(29,78,137);
+    doc.line(ox+w/2-4, oy+h-3, ox+w/2+4, oy+h-3);
+  } else if (tipo === 'puerta_abatir'){
+    doc.setLineDashPattern([0.8,0.8], 0);
+    doc.line(ox+w, oy, ox+2, oy+h);
+    doc.setLineDashPattern([], 0);
+    doc.setFillColor(29,78,137);
+    doc.circle(ox+w-2, oy+h/2, 0.8, 'F');
+  } else {
+    doc.setLineDashPattern([0.8,0.8], 0);
+    doc.line(ox+2, oy+2, ox+w-2, oy+h-2);
+    doc.line(ox+w-2, oy+2, ox+2, oy+h-2);
+    doc.setLineDashPattern([], 0);
+  }
   doc.setDrawColor(0,0,0);
 }
 
@@ -2135,7 +2222,7 @@ document.getElementById('btnPDFCliente').addEventListener('click', async ()=>{
     if (y > 230){ doc.addPage(); y = 18; }
 
     const diagBoxY = y;
-    dibujarDiagramaPDF(doc, marginX, diagBoxY, 42, 42, item.X, item.Y);
+    dibujarDiagramaPDF(doc, marginX, diagBoxY, 42, 42, item.X, item.Y, tipoAperturaDeLinea(line), panelesDeLinea(line));
     doc.setFont('helvetica','bold'); doc.setFontSize(11); doc.setTextColor(20,23,26);
     doc.text(line.nombre, marginX+50, y+5);
     doc.setFont('helvetica','normal'); doc.setFontSize(8.5); doc.setTextColor(60,64,68);
