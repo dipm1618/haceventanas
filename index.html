@@ -291,6 +291,28 @@
   .faq-item p{font-size:13.5px; color:var(--ink-soft); margin:0; line-height:1.6;}
   footer{padding:20px 32px; text-align:center; font-size:11.5px; color:var(--ink-soft); font-family:var(--mono);}
 
+
+  /* Aviso de aporte voluntario */
+  .donation-notice{
+    max-width:900px; margin:16px auto 0; padding:14px 18px;
+    display:flex; align-items:center; justify-content:space-between; gap:16px;
+    background:#FFF4D6; border:1px solid #E9C66A; border-radius:14px;
+    box-shadow:0 4px 14px rgba(20,23,26,.06);
+  }
+  .donation-notice-copy{display:flex; align-items:flex-start; gap:11px; min-width:0;}
+  .donation-notice-icon{width:34px;height:34px;flex-shrink:0;border-radius:50%;
+    display:flex;align-items:center;justify-content:center;background:#FFE4A0;font-size:18px;}
+  .donation-notice strong{display:block;font-family:var(--disp);font-size:14px;margin:0 0 3px;}
+  .donation-notice p{margin:0;color:#5B5140;font-size:12.5px;line-height:1.45;}
+  .donation-notice a{display:inline-flex;align-items:center;justify-content:center;gap:7px;
+    flex-shrink:0;padding:10px 14px;background:var(--ink);color:#fff;text-decoration:none;
+    border-radius:8px;font-size:12.5px;font-weight:600;white-space:nowrap;transition:transform .15s,background .15s;}
+  .donation-notice a:hover{background:var(--blue);transform:translateY(-1px);}
+  @media(max-width:600px){
+    .donation-notice{margin:12px 12px 0;padding:12px;align-items:stretch;flex-direction:column;gap:11px;}
+    .donation-notice a{width:100%;}
+  }
+
   .app-shell{display:flex; max-width:1400px; margin:0 auto; align-items:flex-start;}
   .sidebar{width:220px; flex-shrink:0; background:var(--panel); border-right:1px solid var(--line); padding:20px 14px; display:flex; flex-direction:column; min-height:calc(100vh - 66px); position:sticky; top:0;}
   .sidebar-brand{display:flex; align-items:center; gap:8px; padding:0 8px 22px;}
@@ -398,6 +420,17 @@
     <h1>haceventanas.com</h1>
   </div>
 </header>
+
+<div class="donation-notice" role="note" aria-label="Apoya el proyecto haceventanas.com">
+  <div class="donation-notice-copy">
+    <span class="donation-notice-icon" aria-hidden="true">💛</span>
+    <div>
+      <strong>Este proyecto es gratis y seguirá siendo gratis.</strong>
+      <p>Si haceventanas.com te ayuda en tu trabajo, puedes apoyar su desarrollo con una donación voluntaria.</p>
+    </div>
+  </div>
+  <a href="https://link.mercadopago.cl/haceventanas" target="_blank" rel="noopener noreferrer">Apoyar el proyecto <span aria-hidden="true">↗</span></a>
+</div>
 
 <div class="app-shell" id="appShell" style="display:none;">
   <aside class="sidebar">
