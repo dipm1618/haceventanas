@@ -461,9 +461,22 @@
       <div class="panel-head"><h2>Agregar ventana</h2></div>
       <div class="control-body form-narrow">
         <div class="field">
-          <label for="addLineSelect">Línea y configuración</label>
-          <select id="addLineSelect"></select>
+          <label for="addMaterialSelect">Material</label>
+          <select id="addMaterialSelect"></select>
         </div>
+        <div class="field">
+          <label for="addMarcaSelect">Marca</label>
+          <select id="addMarcaSelect"></select>
+        </div>
+        <div class="field">
+          <label for="addSerieSelect">Línea</label>
+          <select id="addSerieSelect"></select>
+        </div>
+        <div class="field">
+          <label for="addTipoSelect">Tipo de ventana</label>
+          <select id="addTipoSelect"></select>
+        </div>
+        <select id="addLineSelect" style="display:none" aria-hidden="true" tabindex="-1"></select>
         <div class="field">
           <label>Medidas del vano (mm)</label>
           <div class="dim-row">
@@ -1123,6 +1136,46 @@ function clp(n){ return '$' + Math.round(n||0).toLocaleString('es-CL'); }
 
 function lineaDe(id){ return LINEAS.find(l=>l.id===id); }
 
+// Organización del selector: Material -> Marca -> Línea -> Tipo de ventana
+const LINEA_META = {
+  "3200":{linea:"Serie 3200", tipo:"Puerta abatir — 1 hoja"},
+  "4600":{linea:"Serie 4600", tipo:"Puerta vaivén (quicio MAB)"},
+  "S50":{linea:"Serie S-50", tipo:"Acceso principal (1 hoja vaivén)"},
+  "4800":{linea:"Serie 4800", tipo:"Corredera — 2 hojas"},
+  "S20":{linea:"Serie 20", tipo:"Corredera — 2 hojas"},
+  "S25":{linea:"Serie 25", tipo:"Corredera — 2 hojas"},
+  "S28-2":{linea:"Óptima S-28", tipo:"Corredera — 2 hojas (termopanel)"},
+  "S28-3":{linea:"Óptima S-28", tipo:"Corredera — 3 hojas (termopanel)"},
+  "S33":{linea:"Serie S-33", tipo:"Corredera — 2 hojas"},
+  "S33RPT":{linea:"Serie S-33 RPT", tipo:"Corredera — 2 hojas (termopanel)"},
+  "42cam":{linea:"Serie 42", tipo:"Proyectante con cámara"},
+  "42sin":{linea:"Serie 42", tipo:"Proyectante sin cámara"},
+  "S38cam":{linea:"Serie S-38", tipo:"Proyectante con cámara"},
+  "S38RPTproy":{linea:"Serie S-38 RPT", tipo:"Proyectante"},
+  "S83-4":{linea:"Multi Slide S-83", tipo:"Corredera — 4 hojas"},
+  "S83-8":{linea:"Multi Slide S-83", tipo:"Corredera — 8 hojas"}
+};
+function metaLinea(l){
+  const esPVC = /^PVC/i.test(l.grupo);
+  const m = LINEA_META[l.id];
+  // Para líneas nuevas se pueden declarar directamente: marca, serie (línea) y tipoVentana
+  let marca = l.marca || null;
+  let linea = l.serie || (m ? m.linea : null);
+  if (esPVC && (!marca || !linea)){
+    const mm = (l.grupo||'').match(/^PVC\s*[\u2014-]\s*(\S+)\s*(.*)$/);
+    if (!marca) marca = mm ? mm[1] : 'PVC';
+    if (!linea) linea = (mm && mm[2]) ? mm[2] : marca;
+  }
+  if (!marca) marca = 'Sodal';
+  if (!linea) linea = l.grupo;
+  return {
+    material: esPVC ? 'PVC' : 'Aluminio',
+    marca: marca,
+    linea: linea,
+    tipo: l.tipoVentana || (m ? m.tipo : l.nombre)
+  };
+}
+
 const COLORES_DISPONIBLES = [
   { id:'blanco9010', nombre:'Blanco', ral:'RAL 9010', hex:'#F5F4EF' },
   { id:'blanco9016', nombre:'Blanco tráfico', ral:'RAL 9016', hex:'#EFF1EC' },
@@ -1589,15 +1642,16 @@ async function renderCatalogoView(){
       🌎 Detectamos que podrías estar visitando desde fuera de Chile. Por ahora nuestro catálogo está enfocado en el mercado chileno (Sodal, WinHouse) — igual puedes explorar y activar las líneas que te sirvan. Iremos sumando líneas de otros países.
     </div>` : '';
 
-  const gruposCatalogo = [...new Set(LINEAS.map(l=>l.grupo))];
+  const claveGrupo = l => { const m = metaLinea(l); return m.material + ' \u00b7 ' + m.marca + ' \u00b7 ' + m.linea; };
+  const gruposCatalogo = [...new Set(LINEAS.map(claveGrupo))];
   const gruposHTML = gruposCatalogo.map(g=>{
-    const filas = LINEAS.filter(l=>l.grupo===g).map(l=>{
+    const filas = LINEAS.filter(l=>claveGrupo(l)===g).map(l=>{
       const marcado = seleccionActual.includes(l.id);
       const recomendada = paisVisitante && paisDeLinea(l) === paisVisitante;
       return `
         <div class="linea-row">
           <input type="checkbox" id="cat_${l.id}" data-id="${l.id}" ${marcado?'checked':''}>
-          <label for="cat_${l.id}">${l.nombre}</label>
+          <label for="cat_${l.id}">${metaLinea(l).tipo}</label>
           ${recomendada ? '<span class="badge-recomendada">Recomendada</span>' : ''}
         </div>`;
     }).join('');
@@ -1798,23 +1852,69 @@ function lineasParaMostrar(){
     : LINEAS;
 }
 
+const addMaterialSelect = document.getElementById('addMaterialSelect');
+const addMarcaSelect = document.getElementById('addMarcaSelect');
+const addSerieSelect = document.getElementById('addSerieSelect');
+const addTipoSelect = document.getElementById('addTipoSelect');
+
+function llenarSelect(sel, items, valorDeseado){
+  sel.innerHTML = '';
+  items.forEach(it=>{
+    const o = document.createElement('option'); o.value = it.value; o.textContent = it.label;
+    sel.appendChild(o);
+  });
+  const hay = items.some(it=>it.value===valorDeseado);
+  sel.value = hay ? valorDeseado : (items[0] ? items[0].value : '');
+}
+
+// Reconstruye los 4 niveles (Material > Marca > Línea > Tipo) manteniendo la selección previa si se puede
 function poblarSelectorLineas(){
   const lista = lineasParaMostrar();
-  const valorPrevio = addLineSelect.value;
-  addLineSelect.innerHTML = '';
-  const gruposDisponibles = [...new Set(lista.map(l=>l.grupo))];
-  gruposDisponibles.forEach(g=>{
-    const og = document.createElement('optgroup'); og.label = g;
-    lista.filter(l=>l.grupo===g).forEach(l=>{
-      const opt = document.createElement('option'); opt.value = l.id; opt.textContent = l.nombre;
-      og.appendChild(opt);
-    });
-    addLineSelect.appendChild(og);
+  const previa = lineaDe(addLineSelect.value);
+  const pm = previa ? metaLinea(previa) : null;
+  const materiales = [...new Set(lista.map(l=>metaLinea(l).material))];
+  llenarSelect(addMaterialSelect, materiales.map(m=>({value:m,label:m})), pm && pm.material);
+  actualizarMarcas(pm && pm.marca, pm && pm.linea, previa && previa.id);
+}
+
+function actualizarMarcas(marcaDeseada, serieDeseada, idDeseado){
+  const lista = lineasParaMostrar().filter(l=>metaLinea(l).material===addMaterialSelect.value);
+  const marcas = [...new Set(lista.map(l=>metaLinea(l).marca))];
+  llenarSelect(addMarcaSelect, marcas.map(m=>({value:m,label:m})), marcaDeseada);
+  actualizarSeries(serieDeseada, idDeseado);
+}
+
+function actualizarSeries(serieDeseada, idDeseado){
+  const lista = lineasParaMostrar().filter(l=>{
+    const m = metaLinea(l);
+    return m.material===addMaterialSelect.value && m.marca===addMarcaSelect.value;
   });
-  const sigueDisponible = lista.some(l=>l.id===valorPrevio);
-  addLineSelect.value = sigueDisponible ? valorPrevio : (lista[0] ? lista[0].id : '');
+  const series = [...new Set(lista.map(l=>metaLinea(l).linea))];
+  llenarSelect(addSerieSelect, series.map(s=>({value:s,label:s})), serieDeseada);
+  actualizarTipos(idDeseado);
+}
+
+function actualizarTipos(idDeseado){
+  const lista = lineasParaMostrar().filter(l=>{
+    const m = metaLinea(l);
+    return m.material===addMaterialSelect.value && m.marca===addMarcaSelect.value && m.linea===addSerieSelect.value;
+  });
+  llenarSelect(addTipoSelect, lista.map(l=>({value:l.id,label:metaLinea(l).tipo})), idDeseado);
+  const cambio = addLineSelect.value !== addTipoSelect.value;
+  addLineSelect.innerHTML = '';
+  lineasParaMostrar().forEach(l=>{
+    const o = document.createElement('option'); o.value = l.id; o.textContent = l.nombre;
+    addLineSelect.appendChild(o);
+  });
+  addLineSelect.value = addTipoSelect.value;
+  if (cambio) addFormToggles = {};
   updateAddForm();
 }
+
+addMaterialSelect.addEventListener('change', ()=> actualizarMarcas(null, null, null));
+addMarcaSelect.addEventListener('change', ()=> actualizarSeries(null, null));
+addSerieSelect.addEventListener('change', ()=> actualizarTipos(null));
+addTipoSelect.addEventListener('change', ()=> actualizarTipos(addTipoSelect.value));
 poblarSelectorLineas();
 
 const addColorSelect = document.getElementById('addColor');
