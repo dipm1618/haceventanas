@@ -325,6 +325,26 @@
   .work-row button{border:1px solid var(--line); background:#fff; font-size:11.5px; padding:6px 12px; cursor:pointer; font-family:var(--sans); flex-shrink:0;}
   .work-row button:hover{border-color:var(--blue); color:var(--blue);}
 
+  .badge-aprobado{display:inline-block; font-family:var(--mono); font-size:10px; text-transform:uppercase; letter-spacing:.03em; padding:2px 7px; background:var(--blue-soft); color:var(--blue); margin-left:6px; vertical-align:middle;}
+  .period-toggle{display:inline-flex; border:1px solid var(--line); margin-bottom:14px;}
+  .period-toggle button{border:none; background:#fff; padding:7px 16px; font-family:var(--sans); font-size:12.5px; cursor:pointer; color:var(--ink-soft);}
+  .period-toggle button.active{background:var(--ink); color:#fff;}
+  .chart-box{border:1px solid var(--line); background:var(--panel); padding:18px 18px 12px; margin-bottom:30px; position:relative;}
+  .chart-box h3{font-family:var(--mono); font-size:11px; text-transform:uppercase; letter-spacing:.05em; color:var(--ink-soft); margin:0 0 14px; font-weight:500;}
+  .bars{display:flex; align-items:flex-end; gap:6px; height:180px; border-bottom:1px solid var(--line);}
+  .bar-col{flex:1; height:100%; display:flex; flex-direction:column; justify-content:flex-end; align-items:center; min-width:0; cursor:default;}
+  .bar-col .bar-val{font-family:var(--mono); font-size:10.5px; color:var(--ink); margin-bottom:4px; white-space:nowrap;}
+  .bar-col .bar{width:100%; background:var(--blue); border-radius:4px 4px 0 0; min-height:0;}
+  .bar-col:hover .bar{opacity:.8;}
+  .bar-labels{display:flex; gap:6px; margin-top:6px;}
+  .bar-labels span{flex:1; text-align:center; font-family:var(--mono); font-size:10px; color:var(--ink-soft); min-width:0;}
+  .chart-tip{position:fixed; z-index:2000; background:var(--ink); color:#fff; font-family:var(--mono); font-size:11.5px; padding:6px 10px; pointer-events:none; display:none; white-space:nowrap;}
+  .mini-modal-overlay{position:fixed; inset:0; background:rgba(20,22,24,.5); z-index:1500; display:flex; align-items:center; justify-content:center; padding:16px;}
+  .mini-modal{background:#fff; width:100%; max-width:380px; padding:24px; border:1px solid var(--line);}
+  .mini-modal h3{font-family:var(--disp); font-size:17px; margin:0 0 4px;}
+  .mini-modal .sub{color:var(--ink-soft); font-size:12.5px; margin:0 0 16px;}
+  .mini-modal-btns{display:flex; gap:8px; margin-top:14px;}
+  .mini-modal-btns button{padding:9px 16px; border:1px solid var(--line); background:#fff; font-family:var(--sans); font-size:13px; cursor:pointer;}
   .dash-empty{border:1px dashed var(--line); padding:50px 30px; text-align:center;}
   .dash-empty p{color:var(--ink-soft); font-size:13.5px; margin:0 0 18px;}
   .dash-empty button{padding:11px 24px; border:1px solid var(--ink); background:var(--ink); color:#fff; font-family:var(--sans); font-weight:600; font-size:13px; cursor:pointer;}
@@ -405,6 +425,7 @@
     <nav class="sidebar-nav">
       <button class="nav-item active" data-view="dashboard">Dashboard</button>
       <button class="nav-item" data-view="cotizaciones">Cotizaciones</button>
+      <button class="nav-item" data-view="aprobados">Proyectos aprobados</button>
       <button class="nav-item" data-view="nueva">+ Nueva cotización</button>
       <button class="nav-item" data-view="catalogo">Catálogo de líneas</button>
       <button class="nav-item disabled">Inventario<span class="soon">Pronto</span></button>
@@ -418,6 +439,7 @@
   <div class="shell-content" id="shellContent">
     <div id="viewDashboard" class="shell-view"></div>
     <div id="viewCotizaciones" class="shell-view" style="display:none;"></div>
+    <div id="viewAprobados" class="shell-view" style="display:none;"></div>
     <div id="viewEmpresa" class="shell-view" style="display:none;"></div>
     <div id="viewCatalogo" class="shell-view" style="display:none;"></div>
   </div>
@@ -1461,11 +1483,13 @@ function cambiarVista(nombre){
   document.querySelectorAll('.nav-item[data-view]').forEach(b=> b.classList.toggle('active', b.dataset.view===nombre));
   document.getElementById('viewDashboard').style.display = nombre==='dashboard' ? 'block' : 'none';
   document.getElementById('viewCotizaciones').style.display = nombre==='cotizaciones' ? 'block' : 'none';
+  document.getElementById('viewAprobados').style.display = nombre==='aprobados' ? 'block' : 'none';
   document.getElementById('viewEmpresa').style.display = nombre==='empresa' ? 'block' : 'none';
   document.getElementById('viewCatalogo').style.display = nombre==='catalogo' ? 'block' : 'none';
   document.getElementById('appMain').style.display = nombre==='nueva' ? 'grid' : 'none';
   if (nombre==='dashboard') renderDashboardView();
   if (nombre==='cotizaciones') renderCotizacionesView();
+  if (nombre==='aprobados') renderAprobadosView();
   if (nombre==='empresa') renderEmpresaView();
   if (nombre==='catalogo') renderCatalogoView();
 }
@@ -1490,8 +1514,185 @@ document.getElementById('btnSidebarLogout').addEventListener('click', async ()=>
 });
 
 async function obtenerProyectosUsuario(){
-  const { data, error } = await sbClient.from('projects').select('id,nombre,cliente,obra,data,updated_at').eq('user_id', sbUser.id).order('updated_at', {ascending:false});
-  return (!error && data) ? data : [];
+  // Si aún no se ejecutó el SQL de "aprobados", cae a la consulta anterior para no romper nada
+  let r = await sbClient.from('projects').select('id,nombre,cliente,obra,data,updated_at,estado,total_neto,monto_aprobado,fecha_aprobacion').eq('user_id', sbUser.id).order('updated_at', {ascending:false});
+  if (r.error){
+    r = await sbClient.from('projects').select('id,nombre,cliente,obra,data,updated_at').eq('user_id', sbUser.id).order('updated_at', {ascending:false});
+  }
+  return (!r.error && r.data) ? r.data : [];
+}
+
+// ---------- Proyectos aprobados e ingresos ----------
+const MESES_CORTOS = ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
+let periodoAprobados = 'mes';
+
+function escHTML(t){ return String(t==null?'':t).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function fechaISO(d){ return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
+function parseISO(t){ const q=String(t).split('-').map(Number); return new Date(q[0], q[1]-1, q[2]); }
+function inicioSemana(d){ const x=new Date(d.getFullYear(), d.getMonth(), d.getDate()); x.setDate(x.getDate() - ((x.getDay()+6)%7)); return x; } // semana desde el lunes
+
+function esAprobado(p){ return p.estado==='aprobado' && p.fecha_aprobacion && p.monto_aprobado!=null; }
+
+function calcularSumaNetaActual(){
+  if (proyecto.length===0) return 0;
+  const ctx = proyecto.some(it=>it.modoPrecio==='util') ? calcularFactoresUtilidad() : null;
+  return proyecto.reduce((a,it)=> a + calcularPrecioItem(it, ctx).totalItem, 0);
+}
+
+function sumarAprobados(aprobados, desde, hasta){
+  let monto=0, n=0;
+  aprobados.forEach(p=>{
+    const f = parseISO(p.fecha_aprobacion);
+    if (f>=desde && f<hasta){ monto += Number(p.monto_aprobado)||0; n++; }
+  });
+  return {monto, n};
+}
+
+function bucketsAprobados(aprobados, periodo){
+  const hoy = new Date();
+  const out = [];
+  if (periodo==='semana'){
+    const base = inicioSemana(hoy);
+    for (let i=7;i>=0;i--){
+      const d = new Date(base); d.setDate(d.getDate()-7*i);
+      const h = new Date(d); h.setDate(h.getDate()+7);
+      const r = sumarAprobados(aprobados, d, h);
+      out.push({label: String(d.getDate()).padStart(2,'0')+'/'+String(d.getMonth()+1).padStart(2,'0'), nombre:'Semana del '+d.toLocaleDateString('es-CL'), ...r});
+    }
+  } else if (periodo==='anio'){
+    for (let i=4;i>=0;i--){
+      const y = hoy.getFullYear()-i;
+      const r = sumarAprobados(aprobados, new Date(y,0,1), new Date(y+1,0,1));
+      out.push({label:String(y), nombre:String(y), ...r});
+    }
+  } else {
+    for (let i=11;i>=0;i--){
+      const d = new Date(hoy.getFullYear(), hoy.getMonth()-i, 1);
+      const h = new Date(d.getFullYear(), d.getMonth()+1, 1);
+      const r = sumarAprobados(aprobados, d, h);
+      out.push({label: MESES_CORTOS[d.getMonth()] + (d.getMonth()===0 ? ' '+String(d.getFullYear()).slice(2) : ''), nombre: MESES_CORTOS[d.getMonth()]+' '+d.getFullYear(), ...r});
+    }
+  }
+  return out;
+}
+
+function abrirModalAprobacion(p, alTerminar){
+  const ov = document.createElement('div');
+  ov.className = 'mini-modal-overlay';
+  const sugerido = Math.round(Number(p.monto_aprobado!=null ? p.monto_aprobado : p.total_neto) || 0);
+  ov.innerHTML = `
+    <div class="mini-modal">
+      <h3>${esAprobado(p) ? 'Editar aprobación' : 'Aprobar proyecto'}</h3>
+      <p class="sub">${escHTML(p.nombre)}</p>
+      <div class="field"><label>Monto aprobado (neto, sin IVA)</label><input type="number" id="apMonto" min="0" step="1000" value="${sugerido||''}" placeholder="Ej: 1500000"></div>
+      <div class="field"><label>Fecha de aprobación</label><input type="date" id="apFecha" value="${p.fecha_aprobacion || fechaISO(new Date())}"></div>
+      <div class="auth-error" id="apMsg"></div>
+      <div class="mini-modal-btns"><button class="btn" id="apOk" style="width:auto;">Guardar</button><button id="apCancel">Cancelar</button></div>
+    </div>`;
+  document.body.appendChild(ov);
+  const cerrar = ()=> ov.remove();
+  ov.addEventListener('click', e=>{ if (e.target===ov) cerrar(); });
+  ov.querySelector('#apCancel').addEventListener('click', cerrar);
+  ov.querySelector('#apOk').addEventListener('click', async ()=>{
+    const monto = parseFloat(ov.querySelector('#apMonto').value);
+    const fecha = ov.querySelector('#apFecha').value;
+    const msg = ov.querySelector('#apMsg');
+    if (!(monto>=0) || isNaN(monto) || !fecha){ msg.style.color='var(--orange)'; msg.textContent='Ingresa el monto y la fecha.'; return; }
+    const { error } = await sbClient.from('projects').update({ estado:'aprobado', monto_aprobado:monto, fecha_aprobacion:fecha }).eq('id', p.id);
+    if (error){ msg.style.color='var(--orange)'; msg.textContent='No se pudo guardar. ¿Ejecutaste el SQL de proyectos aprobados en Supabase? ('+error.message+')'; return; }
+    cerrar();
+    alTerminar();
+  });
+}
+
+async function quitarAprobacion(id, alTerminar){
+  if (!confirm('¿Quitar la aprobación de este proyecto? Dejará de sumar en tus ingresos.')) return;
+  await sbClient.from('projects').update({ estado:'cotizado', monto_aprobado:null, fecha_aprobacion:null }).eq('id', id);
+  alTerminar();
+}
+
+async function renderAprobadosView(){
+  const el = document.getElementById('viewAprobados');
+  el.innerHTML = '<div class="empty">Cargando…</div>';
+  const todos = await obtenerProyectosUsuario();
+  const aprobados = todos.filter(esAprobado).sort((a,b)=> b.fecha_aprobacion.localeCompare(a.fecha_aprobacion));
+
+  if (aprobados.length === 0){
+    el.innerHTML = `
+      <h2>Proyectos aprobados</h2>
+      <p class="sub">Aquí verás cuánto dinero generas con los trabajos que tus clientes aprueban.</p>
+      <div class="dash-empty">
+        <p>Aún no tienes proyectos aprobados.<br>Ve a <b>Cotizaciones</b> y pulsa <b>Aprobar</b> en el trabajo que cerraste con tu cliente.</p>
+        <button id="btnIrCotizaciones">Ir a Cotizaciones</button>
+      </div>`;
+    document.getElementById('btnIrCotizaciones').addEventListener('click', ()=> cambiarVista('cotizaciones'));
+    return;
+  }
+
+  const hoy = new Date();
+  const iniSem = inicioSemana(hoy);
+  const finSem = new Date(iniSem); finSem.setDate(finSem.getDate()+7);
+  const sem = sumarAprobados(aprobados, iniSem, finSem);
+  const mes = sumarAprobados(aprobados, new Date(hoy.getFullYear(), hoy.getMonth(), 1), new Date(hoy.getFullYear(), hoy.getMonth()+1, 1));
+  const anio = sumarAprobados(aprobados, new Date(hoy.getFullYear(),0,1), new Date(hoy.getFullYear()+1,0,1));
+  const card = (t, r)=> `<div class="stat-card"><div class="lbl">${t}</div><div class="val" style="font-size:22px;">${clp(r.monto)}</div><div style="font-size:11.5px; color:var(--ink-soft); margin-top:6px;">${r.n} proyecto${r.n!==1?'s':''}</div></div>`;
+
+  const buckets = bucketsAprobados(aprobados, periodoAprobados);
+  const max = Math.max(...buckets.map(b=>b.monto), 0);
+  const idxMax = max>0 ? buckets.findIndex(b=>b.monto===max) : -1;
+  const titulos = { semana:'Ingresos por semana (últimas 8)', mes:'Ingresos por mes (últimos 12)', anio:'Ingresos por año (últimos 5)' };
+  const barras = buckets.map((b,i)=>{
+    const h = max>0 ? Math.round((b.monto/max)*140) : 0;
+    return `<div class="bar-col" data-tip="${escHTML(b.nombre)}: ${clp(b.monto)} · ${b.n} proyecto${b.n!==1?'s':''}">
+      ${i===idxMax ? `<div class="bar-val">${clp(b.monto)}</div>` : ''}
+      <div class="bar" style="height:${b.monto>0 ? Math.max(h,3) : 0}px;"></div>
+    </div>`;
+  }).join('');
+  const etiquetas = buckets.map(b=>`<span>${escHTML(b.label)}</span>`).join('');
+
+  const filas = aprobados.map(p=>`
+    <div class="work-row">
+      <div class="w-name"><b>${escHTML(p.nombre)}</b><span>${escHTML(p.cliente||'Sin cliente')}${p.obra?' · '+escHTML(p.obra):''}</span></div>
+      <div class="w-date">${parseISO(p.fecha_aprobacion).toLocaleDateString('es-CL')}</div>
+      <div class="w-date" style="color:var(--ink); font-weight:600; min-width:90px; text-align:right;">${clp(Number(p.monto_aprobado)||0)}</div>
+      <button data-id="${p.id}" class="ap-abrir">Abrir</button>
+      <button data-id="${p.id}" class="ap-editar">Editar</button>
+      <button data-id="${p.id}" class="ap-quitar">Quitar</button>
+    </div>`).join('');
+
+  el.innerHTML = `
+    <h2>Proyectos aprobados</h2>
+    <p class="sub">Dinero generado por los trabajos que tus clientes aprobaron. Montos netos, sin IVA. La semana va de lunes a domingo.</p>
+    <div class="stat-grid">
+      ${card('Esta semana', sem)}${card('Este mes', mes)}${card('Este año', anio)}
+    </div>
+    <div class="period-toggle">
+      <button data-p="semana" class="${periodoAprobados==='semana'?'active':''}">Semana</button>
+      <button data-p="mes" class="${periodoAprobados==='mes'?'active':''}">Mes</button>
+      <button data-p="anio" class="${periodoAprobados==='anio'?'active':''}">Año</button>
+    </div>
+    <div class="chart-box">
+      <h3>${titulos[periodoAprobados]}</h3>
+      <div class="bars">${barras}</div>
+      <div class="bar-labels">${etiquetas}</div>
+    </div>
+    <p style="font-family:var(--mono); font-size:11px; text-transform:uppercase; letter-spacing:.05em; color:var(--ink-soft); margin:0 0 10px;">Detalle de proyectos aprobados</p>
+    <div class="work-list">${filas}</div>
+  `;
+
+  el.querySelectorAll('.period-toggle button').forEach(b=> b.addEventListener('click', ()=>{ periodoAprobados = b.dataset.p; renderAprobadosView(); }));
+  el.querySelectorAll('.ap-abrir').forEach(b=> b.addEventListener('click', ()=> cargarProyectoDB(b.dataset.id)));
+  el.querySelectorAll('.ap-editar').forEach(b=> b.addEventListener('click', ()=> abrirModalAprobacion(aprobados.find(x=>x.id===b.dataset.id), renderAprobadosView)));
+  el.querySelectorAll('.ap-quitar').forEach(b=> b.addEventListener('click', ()=> quitarAprobacion(b.dataset.id, renderAprobadosView)));
+
+  // Tooltip al pasar el mouse (o tocar) sobre una barra
+  let tip = document.getElementById('chartTip');
+  if (!tip){ tip = document.createElement('div'); tip.id = 'chartTip'; tip.className = 'chart-tip'; document.body.appendChild(tip); }
+  el.querySelectorAll('.bar-col').forEach(c=>{
+    c.addEventListener('mousemove', e=>{ tip.textContent = c.dataset.tip; tip.style.display='block'; tip.style.left = (e.clientX+12)+'px'; tip.style.top = (e.clientY-34)+'px'; });
+    c.addEventListener('mouseleave', ()=>{ tip.style.display='none'; });
+    c.addEventListener('click', e=>{ tip.textContent = c.dataset.tip; tip.style.display='block'; tip.style.left = Math.max(8, e.clientX-60)+'px'; tip.style.top = (e.clientY-40)+'px'; setTimeout(()=>{ tip.style.display='none'; }, 2500); });
+  });
 }
 
 async function renderDashboardView(){
@@ -1516,6 +1717,8 @@ async function renderDashboardView(){
 
   const totalVentanas = proyectos.reduce((sum,p)=> sum + (p.data && p.data.proyecto ? p.data.proyecto.reduce((a,it)=>a+(it.cantidad||0),0) : 0), 0);
   const ultima = new Date(proyectos[0].updated_at).toLocaleDateString('es-CL');
+  const _h = new Date();
+  const ingresosMes = sumarAprobados(proyectos.filter(esAprobado), new Date(_h.getFullYear(), _h.getMonth(), 1), new Date(_h.getFullYear(), _h.getMonth()+1, 1));
 
   const filas = proyectos.slice(0,5).map(p=>`
     <div class="work-row">
@@ -1531,6 +1734,7 @@ async function renderDashboardView(){
     <div class="stat-grid">
       <div class="stat-card"><div class="lbl">Cotizaciones guardadas</div><div class="val">${proyectos.length}</div></div>
       <div class="stat-card"><div class="lbl">Ventanas cotizadas</div><div class="val">${totalVentanas}</div></div>
+      <div class="stat-card"><div class="lbl">Aprobado este mes (neto)</div><div class="val" style="font-size:20px;">${clp(ingresosMes.monto)}</div></div>
       <div class="stat-card"><div class="lbl">Última actividad</div><div class="val" style="font-size:16px;">${ultima}</div></div>
     </div>
     <p style="font-family:var(--mono); font-size:11px; text-transform:uppercase; letter-spacing:.05em; color:var(--ink-soft); margin:0 0 10px;">Trabajos recientes</p>
@@ -1559,8 +1763,9 @@ async function renderCotizacionesView(){
     const totalVentanas = p.data && p.data.proyecto ? p.data.proyecto.reduce((a,it)=>a+(it.cantidad||0),0) : 0;
     return `
     <div class="work-row">
-      <div class="w-name"><b>${p.nombre}</b><span>${p.cliente||'Sin cliente'}${p.obra?' · '+p.obra:''} · ${totalVentanas} ventanas</span></div>
+      <div class="w-name"><b>${p.nombre}${esAprobado(p)?'<span class="badge-aprobado">Aprobado '+clp(Number(p.monto_aprobado)||0)+'</span>':''}</b><span>${p.cliente||'Sin cliente'}${p.obra?' · '+p.obra:''} · ${totalVentanas} ventanas${p.total_neto?' · cotizado '+clp(Number(p.total_neto))+' + IVA':''}</span></div>
       <div class="w-date">${new Date(p.updated_at).toLocaleDateString('es-CL')}</div>
+      <button data-id="${p.id}" class="aprobar">${esAprobado(p)?'Editar aprobación':'Aprobar'}</button>
       <button data-id="${p.id}" class="abrir">Abrir</button>
       <button data-id="${p.id}" class="borrar">Eliminar</button>
     </div>`;
@@ -1572,6 +1777,7 @@ async function renderCotizacionesView(){
     <div class="work-list">${filas}</div>
   `;
   el.querySelectorAll('.abrir').forEach(b=> b.addEventListener('click', ()=> cargarProyectoDB(b.dataset.id)));
+  el.querySelectorAll('.aprobar').forEach(b=> b.addEventListener('click', ()=> abrirModalAprobacion(proyectos.find(x=>x.id===b.dataset.id), renderCotizacionesView)));
   el.querySelectorAll('.borrar').forEach(b=> b.addEventListener('click', async ()=>{
     if (!confirm('¿Eliminar esta cotización? Esta acción no se puede deshacer.')) return;
     await sbClient.from('projects').delete().eq('id', b.dataset.id);
@@ -1768,13 +1974,19 @@ async function guardarProyectoDB(){
     pago: document.getElementById('datPago').value,
     notas: document.getElementById('datNotas').value,
   };
-  const { error } = await sbClient.from('projects').insert({
+  const fila = {
     user_id: sbUser.id,
     nombre,
     cliente: payload.cliente,
     obra: payload.obra,
     data: payload,
-  });
+    total_neto: Math.round(calcularSumaNetaActual()),
+  };
+  let { error } = await sbClient.from('projects').insert(fila);
+  if (error){ // si aún no existe la columna total_neto, guarda igual sin ella
+    delete fila.total_neto;
+    ({ error } = await sbClient.from('projects').insert(fila));
+  }
   if (error){ alert('Error al guardar: ' + error.message); return; }
   renderListaProyectosGuardados();
 }
