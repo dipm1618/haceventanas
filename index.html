@@ -325,6 +325,13 @@
   .work-row button{border:1px solid var(--line); background:#fff; font-size:11.5px; padding:6px 12px; cursor:pointer; font-family:var(--sans); flex-shrink:0;}
   .work-row button:hover{border-color:var(--blue); color:var(--blue);}
 
+  .legal-check{display:flex; gap:8px; align-items:flex-start; font-size:12px; color:var(--ink-soft); margin:2px 0 12px; line-height:1.45; cursor:pointer;}
+  .legal-check input{margin-top:2px; flex-shrink:0;}
+  .legal-check a{color:var(--blue);}
+  .link-btn{background:none; border:none; padding:0; margin:0 0 10px; font-family:var(--sans); font-size:12px; color:var(--blue); cursor:pointer; text-decoration:underline; display:block;}
+  .legal-links{font-family:var(--mono); font-size:10.5px; color:var(--ink-soft); padding:8px 8px 0; line-height:1.8;}
+  .legal-links a{color:var(--ink-soft);}
+  #mainFooter a{color:inherit;}
   .badge-aprobado{display:inline-block; font-family:var(--mono); font-size:10px; text-transform:uppercase; letter-spacing:.03em; padding:2px 7px; background:var(--blue-soft); color:var(--blue); margin-left:6px; vertical-align:middle;}
   .period-toggle{display:inline-flex; border:1px solid var(--line); margin-bottom:14px;}
   .period-toggle button{border:none; background:#fff; padding:7px 16px; font-family:var(--sans); font-size:12.5px; cursor:pointer; color:var(--ink-soft);}
@@ -345,6 +352,7 @@
   .mini-modal .sub{color:var(--ink-soft); font-size:12.5px; margin:0 0 16px;}
   .mini-modal-btns{display:flex; gap:8px; margin-top:14px;}
   .mini-modal-btns button{padding:9px 16px; border:1px solid var(--line); background:#fff; font-family:var(--sans); font-size:13px; cursor:pointer;}
+  .mini-modal-btns button.btn{background:var(--ink); color:#fff; border-color:var(--ink); font-weight:600;}
   .dash-empty{border:1px dashed var(--line); padding:50px 30px; text-align:center;}
   .dash-empty p{color:var(--ink-soft); font-size:13.5px; margin:0 0 18px;}
   .dash-empty button{padding:11px 24px; border:1px solid var(--ink); background:var(--ink); color:#fff; font-family:var(--sans); font-weight:600; font-size:13px; cursor:pointer;}
@@ -435,6 +443,7 @@
     </nav>
     <div class="sidebar-plan"><span>Plan</span><span id="sidebarPlanBadge">Gratis</span></div>
     <button class="nav-item" id="btnSidebarLogout" style="margin-top:6px; color:var(--ink-soft);">Cerrar sesión</button>
+    <div class="legal-links"><a href="/terminos.html" target="_blank" rel="noopener">Términos</a> · <a href="/privacidad.html" target="_blank" rel="noopener">Privacidad</a></div>
   </aside>
   <div class="shell-content" id="shellContent">
     <div id="viewDashboard" class="shell-view"></div>
@@ -617,7 +626,7 @@
   </div>
 </section>
 
-<footer id="mainFooter">© haceventanas.com — Herramienta para ventaneros en Chile</footer>
+<footer id="mainFooter">© haceventanas.com — Herramienta para ventaneros en Chile · <a href="/terminos.html">Términos de uso</a> · <a href="/privacidad.html">Política de privacidad</a></footer>
 
 <script type="application/ld+json">
 {
@@ -797,6 +806,16 @@ const LINEAS = [
     ],
     vidrio:[{cantidad:"1", ancho:"X-117", alto:"Y-141"}],
   },
+  { id:"S38sin", grupo:"Fijos y proyectantes", nombre:"S-38 — Proyectante sin cámara", vars:["X","Y"],
+    perfiles:[
+      {codigo:"S381", cantidad:"2", largo:"X", corte:"45/45"},
+      {codigo:"S381", cantidad:"2", largo:"Y", corte:"45/45"},
+      {codigo:"S386", cantidad:"2", largo:"X-33", corte:"45/45"},
+      {codigo:"S386", cantidad:"2", largo:"Y-33", corte:"45/45"},
+    ],
+    vidrio:[{cantidad:"1", ancho:"X-117", alto:"Y-117"}],
+    nota:"El catálogo imprime X-33 en las dos filas de la hoja; se interpretó como X-33 y Y-33 (coherente con el vidrio Y-117).",
+  },
   { id:"S38RPTproy", grupo:"Fijos y proyectantes", nombre:"S-38 RPT — Proyectante", vars:["X","Y"],
     perfiles:[
       {codigo:"S381R", cantidad:"2", largo:"X", corte:"45/45"},
@@ -805,6 +824,15 @@ const LINEAS = [
       {codigo:"S386R", cantidad:"2", largo:"Y-33", corte:"45/45"},
     ],
     termopanel:[{cantidad:"1", ancho:"X-133", alto:"Y-133"}],
+  },
+  { id:"S38RPTfijo", grupo:"Fijos y proyectantes", nombre:"S-38 RPT — Fijo", vars:["X","Y"],
+    perfiles:[
+      {codigo:"S381R", cantidad:"2", largo:"X", corte:"45/45"},
+      {codigo:"S381R", cantidad:"2", largo:"Y", corte:"45/45"},
+      {codigo:"S383", cantidad:"2", largo:"X-49", corte:"90/90"},
+      {codigo:"S383", cantidad:"2", largo:"Y-85", corte:"90/90"},
+    ],
+    termopanel:[{cantidad:"1", ancho:"X-60", alto:"Y-60"}],
   },
   { id:"S83-4", grupo:"Multi Slide", nombre:"S-83 — 4 hojas", vars:["X","Y"],
     perfiles:[
@@ -1121,7 +1149,7 @@ const PERFIL_NOMBRES = {
   "4801":"Riel Inferior", "4802":"Riel Superior", "4803":"Jamba", "4804":"Zócalo", "4805":"Cabezal",
   "4806":"Traslapo", "4808":"Pierna con Aleta", "4810":"Traslapo Reforzado", "4811":"Pierna Reforzada",
   "S281":"Riel", "S282":"Hoja TP", "S283":"Traslapo", "S285":"Riel Triple", "S286":"Cortagotera",
-  "S381":"Marco", "S381R":"Marco RPT", "S385":"Cámara de Agua", "S386":"Hoja TP", "S386R":"Hoja RPT TP",
+  "S381":"Marco", "S381R":"Marco RPT", "S383":"Junquillo TP", "S387":"Junquillo TP", "S385":"Cámara de Agua", "S386":"Hoja TP", "S386R":"Hoja RPT TP",
   "S501":"Pierna", "S502":"Zócalo Cabezal", "S503":"Palillo",
   "S831":"Riel Inferior 4L", "S832":"Riel Superior", "S833":"Jamba 4L", "S834":"Hoja",
 };
@@ -1173,7 +1201,9 @@ const LINEA_META = {
   "42cam":{linea:"Serie 42", tipo:"Proyectante con cámara"},
   "42sin":{linea:"Serie 42", tipo:"Proyectante sin cámara"},
   "S38cam":{linea:"Serie S-38", tipo:"Proyectante con cámara"},
+  "S38sin":{linea:"Serie S-38", tipo:"Proyectante sin cámara"},
   "S38RPTproy":{linea:"Serie S-38 RPT", tipo:"Proyectante"},
+  "S38RPTfijo":{linea:"Serie S-38 RPT", tipo:"Fijo"},
   "S83-4":{linea:"Multi Slide S-83", tipo:"Corredera — 4 hojas"},
   "S83-8":{linea:"Multi Slide S-83", tipo:"Corredera — 8 hojas"}
 };
@@ -1217,6 +1247,8 @@ function hexToRgb(hex){
 }
 
 function tipoAperturaDeLinea(line){
+  const nom = (line.nombre||'').toLowerCase();
+  if (/\bfij[oa]\b/.test(nom) && !nom.includes('proyectante') && !nom.includes('puerta')) return 'fijo';
   const t = ((line.grupo||'') + ' ' + (line.nombre||'')).toLowerCase();
   if (t.includes('puerta')) return t.includes('corredera') ? 'puerta_corredera' : 'puerta_abatir';
   if (t.includes('corredera') || t.includes('riel') || t.includes('multi slide')) return 'corredera';
@@ -1803,6 +1835,7 @@ async function renderEmpresaView(){
       <button class="btn" id="btnGuardarEmpresa">Guardar cambios</button>
       <div class="auth-error" id="empresaMsg"></div>
     </div>
+    <p style="font-size:12.5px; color:var(--ink-soft); margin-top:22px; max-width:420px;">¿Quieres ver, corregir o borrar tus datos? Revisa la <a href="/privacidad.html" target="_blank" rel="noopener" style="color:var(--blue);">Política de privacidad</a>.</p>
     <p style="font-family:var(--mono); font-size:11px; color:var(--ink-soft); margin-top:26px;">Plan actual: ${planActual==='pro'?'Pro':'Gratis'} · Miembro desde ${fecha}</p>
   `;
 
@@ -1895,6 +1928,57 @@ async function renderCatalogoView(){
 
 let authModo = 'login';
 
+// ---------- Aceptación de términos y recuperación de contraseña ----------
+const TERMINOS_VERSION = '2026-10-18';
+function checkboxTerminosHTML(id){
+  return '<label class="legal-check"><input type="checkbox" id="'+id+'"><span>Acepto los <a href="/terminos.html" target="_blank" rel="noopener">Términos de uso</a> y la <a href="/privacidad.html" target="_blank" rel="noopener">Política de privacidad</a>.</span></label>';
+}
+function datosAceptacion(){ return { data: { acepta_terminos: new Date().toISOString(), version_terminos: TERMINOS_VERSION } }; }
+
+async function enviarRecuperacion(email, msgEl){
+  msgEl.style.color = 'var(--orange)';
+  if (!email){ msgEl.textContent = 'Escribe tu email arriba y vuelve a pulsar "¿Olvidaste tu contraseña?".'; return; }
+  msgEl.textContent = 'Enviando…';
+  const { error } = await sbClient.auth.resetPasswordForEmail(email, { redirectTo: location.origin + '/' });
+  if (error){
+    msgEl.textContent = (error.status===429) ? 'Demasiados intentos. Espera unos minutos y vuelve a intentar.' : 'No pudimos enviar el correo. Intenta de nuevo en unos minutos.';
+    return;
+  }
+  msgEl.style.color = 'var(--blue)';
+  msgEl.textContent = 'Si ese correo tiene una cuenta, te enviamos un enlace para crear una contraseña nueva. Revisa también la carpeta de spam.';
+}
+
+function mostrarModalNuevaClave(){
+  if (document.getElementById('modalNuevaClave')) return;
+  const ov = document.createElement('div');
+  ov.className = 'mini-modal-overlay'; ov.id = 'modalNuevaClave';
+  ov.innerHTML = `
+    <div class="mini-modal">
+      <h3>Crea tu nueva contraseña</h3>
+      <p class="sub">Elige una contraseña nueva para tu cuenta.</p>
+      <div class="field"><label>Nueva contraseña</label><input type="password" id="nvClave1" placeholder="Mínimo 6 caracteres" autocomplete="new-password"></div>
+      <div class="field"><label>Repite la contraseña</label><input type="password" id="nvClave2" autocomplete="new-password"></div>
+      <div class="auth-error" id="nvMsg"></div>
+      <div class="mini-modal-btns"><button class="btn" id="nvOk" style="width:auto;">Guardar contraseña</button><button id="nvCancel">Cancelar</button></div>
+    </div>`;
+  document.body.appendChild(ov);
+  const limpiarURL = ()=>{ try{ history.replaceState(null, '', location.pathname); }catch(e){} };
+  ov.querySelector('#nvCancel').addEventListener('click', ()=>{ ov.remove(); limpiarURL(); });
+  ov.querySelector('#nvOk').addEventListener('click', async ()=>{
+    const c1 = ov.querySelector('#nvClave1').value, c2 = ov.querySelector('#nvClave2').value;
+    const msg = ov.querySelector('#nvMsg');
+    msg.style.color = 'var(--orange)';
+    if (c1.length < 6){ msg.textContent = 'La contraseña debe tener al menos 6 caracteres.'; return; }
+    if (c1 !== c2){ msg.textContent = 'Las contraseñas no coinciden.'; return; }
+    const { error } = await sbClient.auth.updateUser({ password: c1 });
+    if (error){ msg.textContent = 'No se pudo cambiar la contraseña: ' + error.message; return; }
+    msg.style.color = 'var(--blue)';
+    msg.textContent = 'Contraseña actualizada ✓';
+    limpiarURL();
+    setTimeout(()=> ov.remove(), 1400);
+  });
+}
+
 function renderAuthUI(){
   const body = document.getElementById('authBody');
   const badge = document.getElementById('planBadgeHead');
@@ -1923,6 +2007,7 @@ function renderAuthUI(){
     </div>
     <div class="field"><label>Email</label><input type="email" id="authEmail" placeholder="tu@correo.com"></div>
     <div class="field"><label>Contraseña</label><input type="password" id="authPass" placeholder="Mínimo 6 caracteres"></div>
+    ${authModo==='signup' ? checkboxTerminosHTML('authTerminos') : '<button type="button" class="link-btn" id="authOlvide">¿Olvidaste tu contraseña?</button>'}
     <button class="btn" id="authSubmit">${authModo==='signup'?'Crear cuenta gratis':'Iniciar sesión'}</button>
     <div class="auth-error" id="authError"></div>
     ${authModo==='signup' ? '<p style="font-size:11px; color:var(--ink-soft); margin:8px 0 0;">Podrás completar los datos de tu empresa después, en "Mi empresa".</p>' : ''}
@@ -1930,6 +2015,8 @@ function renderAuthUI(){
 
   document.getElementById('authTabLogin').addEventListener('click', ()=>{ authModo='login'; renderAuthUI(); });
   document.getElementById('authTabSignup').addEventListener('click', ()=>{ authModo='signup'; renderAuthUI(); });
+  const btnOlvide = document.getElementById('authOlvide');
+  if (btnOlvide) btnOlvide.addEventListener('click', ()=> enviarRecuperacion(document.getElementById('authEmail').value.trim(), document.getElementById('authError')));
 
   document.getElementById('authSubmit').addEventListener('click', async ()=>{
     const email = document.getElementById('authEmail').value.trim();
@@ -1943,7 +2030,8 @@ function renderAuthUI(){
       if (error){ errorEl.textContent = error.message; return; }
       refrescarSesion();
     } else {
-      const { error } = await sbClient.auth.signUp({ email, password });
+      if (!document.getElementById('authTerminos').checked){ errorEl.textContent = 'Debes aceptar los Términos de uso y la Política de privacidad.'; return; }
+      const { error } = await sbClient.auth.signUp({ email, password, options: datosAceptacion() });
       if (error){ errorEl.textContent = error.message; return; }
       errorEl.style.color = 'var(--blue)';
       errorEl.textContent = 'Cuenta creada. Revisa tu correo para confirmarla y luego inicia sesión.';
@@ -2136,6 +2224,7 @@ COLORES_DISPONIBLES.forEach(c=>{
   opt.textContent = c.nombre + (c.ral!=='—' ? ' ('+c.ral+')' : '');
   addColorSelect.appendChild(opt);
 });
+addColorSelect.value = 'negro9005'; // color por defecto: negro (se distingue mejor del fondo)
 addColorSelect.addEventListener('change', updateAddForm);
 
 function renderAddToggles(){
@@ -2360,6 +2449,7 @@ function mostrarGateRegistro(wrap){
         <div style="max-width:280px; margin:0 auto; text-align:left;">
           <div class="field"><label>Email</label><input type="email" id="regEmail" placeholder="tu@correo.com"></div>
           <div class="field"><label>Contrasena</label><input type="password" id="regPass" placeholder="Minimo 6 caracteres"></div>
+          ${modo==='signup' ? checkboxTerminosHTML('regTerminos') : '<button type="button" class="link-btn" id="regOlvide">¿Olvidaste tu contraseña?</button>'}
           <button class="btn secondary" id="regSubmit" style="width:100%;">${modo==='signup'?'Crear cuenta gratis':'Iniciar sesion'}</button>
           <div class="auth-error" id="regError"></div>
         </div>
@@ -2367,6 +2457,8 @@ function mostrarGateRegistro(wrap){
     `;
     document.getElementById('regTabSignup').addEventListener('click', ()=>{ modo='signup'; pintar(); });
     document.getElementById('regTabLogin').addEventListener('click', ()=>{ modo='login'; pintar(); });
+    const regOlvide = document.getElementById('regOlvide');
+    if (regOlvide) regOlvide.addEventListener('click', ()=> enviarRecuperacion(document.getElementById('regEmail').value.trim(), document.getElementById('regError')));
     document.getElementById('regSubmit').addEventListener('click', async ()=>{
       const email = document.getElementById('regEmail').value.trim();
       const password = document.getElementById('regPass').value;
@@ -2375,7 +2467,8 @@ function mostrarGateRegistro(wrap){
       errorEl.textContent = '';
       if (!email || !password){ errorEl.textContent = 'Completa email y contrasena.'; return; }
       if (modo === 'signup'){
-        const { error } = await sbClient.auth.signUp({ email, password });
+        if (!document.getElementById('regTerminos').checked){ errorEl.textContent = 'Debes aceptar los Términos de uso y la Política de privacidad.'; return; }
+        const { error } = await sbClient.auth.signUp({ email, password, options: datosAceptacion() });
         if (error){ errorEl.textContent = error.message; return; }
         errorEl.style.color = 'var(--blue)';
         errorEl.textContent = 'Cuenta creada. Revisa tu correo para confirmarla y luego inicia sesion.';
@@ -2763,7 +2856,10 @@ document.getElementById('cfgM2Rate').addEventListener('input', e=>{ precios.m2Ra
 document.getElementById('cfgM2Minimo').addEventListener('input', e=>{ precios.m2Minimo = parseFloat(e.target.value)||1; renderListaVentanas(); });
 document.getElementById('cfgM2IVA').addEventListener('change', e=>{ precios.m2IncluyeIVA = e.target.checked; renderListaVentanas(); });
 
-sbClient.auth.onAuthStateChange(()=>{ refrescarSesion(); });
+sbClient.auth.onAuthStateChange((evento)=>{
+  if (evento === 'PASSWORD_RECOVERY') setTimeout(mostrarModalNuevaClave, 400); // el usuario llegó desde el enlace del correo
+  refrescarSesion();
+});
 
 updateAddForm();
 renderAll();
