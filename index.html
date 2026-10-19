@@ -336,6 +336,9 @@
   .install-item{color:var(--blue); font-weight:600;}
   .install-hint{font-size:11.5px; color:var(--ink-soft); padding:6px 10px; line-height:1.45;}
   #pdfMobileMsg{display:none; padding:26px 22px; font-size:14px; color:var(--ink-soft); line-height:1.6; text-align:center; flex:1;}
+  #pdfModalApoyo{padding:9px 18px; border-top:1px solid var(--line); background:#FAFAF9; font-size:12px; color:var(--ink-soft); line-height:1.45; text-align:center;}
+  #pdfModalApoyo a{color:var(--blue); font-weight:600; text-decoration:none; white-space:nowrap;}
+  #pdfModalApoyo a:hover{text-decoration:underline;}
   .donar-banner{display:flex; align-items:center; gap:14px; background:var(--blue-soft); border:1px solid #C9D8EA; border-left:4px solid var(--blue); padding:12px 14px; margin-bottom:22px; font-size:13px; line-height:1.5; color:var(--ink);}
   .donar-texto{flex:1; min-width:0;}
   .donar-btn{flex-shrink:0; display:inline-block; background:var(--blue); color:#fff !important; text-decoration:none; font-weight:600; font-size:12.5px; padding:9px 16px; white-space:nowrap;}
@@ -698,6 +701,7 @@
       <button id="pdfModalClose" title="Cerrar">×</button>
     </div>
     <iframe id="pdfModalFrame"></iframe>
+    <div id="pdfModalApoyo">¿Te sirvió? haceventanas es gratis; si quieres, <a href="https://link.mercadopago.cl/haceventanas" target="_blank" rel="noopener noreferrer">apóyalo con un aporte voluntario ♥</a></div>
     <div id="pdfModalFooter">
       <a id="pdfModalOpenTab" target="_blank" rel="noopener">Abrir en pestaña nueva ↗</a>
       <button class="btn" id="pdfModalDownload">Descargar PDF</button>
