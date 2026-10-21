@@ -339,6 +339,21 @@
   #pdfModalApoyo{padding:9px 18px; border-top:1px solid var(--line); background:#FAFAF9; font-size:12px; color:var(--ink-soft); line-height:1.45; text-align:center;}
   #pdfModalApoyo a{color:var(--blue); font-weight:600; text-decoration:none; white-space:nowrap;}
   #pdfModalApoyo a:hover{text-decoration:underline;}
+  .field input[type="number"], .precios-grid input[type="number"]{width:100%; padding:10px 12px; border:1px solid var(--line); background:#fff; font-family:var(--mono); font-size:13px; color:var(--ink);}
+  .field input[type="number"]:focus{outline:2px solid var(--blue); outline-offset:-1px;}
+  .precios-sec{margin-bottom:28px;}
+  .precios-sec h3{font-family:var(--mono); font-size:11px; text-transform:uppercase; letter-spacing:.05em; color:var(--ink-soft); margin:0 0 10px; font-weight:500;}
+  .precios-sec .ayuda{font-size:12px; color:var(--ink-soft); margin:0 0 12px; line-height:1.5; max-width:640px;}
+  .precios-grid{display:grid; grid-template-columns:repeat(auto-fit, minmax(200px,1fr)); gap:12px 16px; max-width:720px; align-items:end;}
+  .precios-grid .chk{display:flex; align-items:center; gap:8px; font-size:13px; padding-bottom:12px;}
+  .precio-grupo{border:1px solid var(--line); background:var(--panel); margin-bottom:8px;}
+  .precio-grupo summary{cursor:pointer; padding:12px 14px; font-size:13px; font-weight:600; display:flex; align-items:center; gap:10px; list-style:none;}
+  .precio-grupo summary::-webkit-details-marker{display:none;}
+  .precio-grupo summary::before{content:'▸'; color:var(--ink-soft); font-size:11px; transition:transform .15s;}
+  .precio-grupo[open] summary::before{transform:rotate(90deg);}
+  .precio-grupo summary .cnt{margin-left:auto; font-family:var(--mono); font-size:10.5px; font-weight:400; color:var(--ink-soft);}
+  .precio-grupo .price-row{padding:7px 14px;}
+  .precios-buscar{max-width:360px; margin-bottom:12px;}
   .donar-banner{display:flex; align-items:center; gap:14px; background:var(--blue-soft); border:1px solid #C9D8EA; border-left:4px solid var(--blue); padding:12px 14px; margin-bottom:22px; font-size:13px; line-height:1.5; color:var(--ink);}
   .donar-texto{flex:1; min-width:0;}
   .donar-btn{flex-shrink:0; display:inline-block; background:var(--blue); color:#fff !important; text-decoration:none; font-weight:600; font-size:12.5px; padding:9px 16px; white-space:nowrap;}
@@ -543,7 +558,7 @@
       <button class="nav-item" data-view="catalogo">Catálogo de líneas</button>
       <button class="nav-item disabled">Inventario<span class="soon">Pronto</span></button>
       <button class="nav-item disabled">Clientes<span class="soon">Pronto</span></button>
-      <button class="nav-item disabled">Precios<span class="soon">Pronto</span></button>
+      <button class="nav-item" data-view="precios">Precios</button>
       <button class="nav-item" data-view="empresa">Mi empresa</button>
     </nav>
     <button type="button" class="nav-item install-item" id="btnInstalar" style="display:none;">📲 Instalar app</button>
@@ -561,6 +576,7 @@
     <div id="viewDashboard" class="shell-view"></div>
     <div id="viewCotizaciones" class="shell-view" style="display:none;"></div>
     <div id="viewAprobados" class="shell-view" style="display:none;"></div>
+    <div id="viewPrecios" class="shell-view" style="display:none;"></div>
     <div id="viewEmpresa" class="shell-view" style="display:none;"></div>
     <div id="viewCatalogo" class="shell-view" style="display:none;"></div>
   </div>
@@ -1290,6 +1306,7 @@ function iconoPerfil(nombre){
 
 // ---------- Estado del proyecto ----------
 let proyecto = [];
+let proyectoActual = null; // {id, nombre} del proyecto guardado que está abierto (null = cotización nueva)
 let nextId = 1;
 let addFormToggles = {};
 let planActual = 'gratis';
@@ -1583,7 +1600,9 @@ async function refrescarSesion(){
     }
     lineasActivasUsuario = (perfil && perfil.lineas_activas && perfil.lineas_activas.length > 0) ? perfil.lineas_activas : null;
     registrarActividad();
+    cargarPreciosMaestros();
   } else {
+    preciosMaestros = null; preciosCargadosPara = null;
     planActual = 'gratis';
     lineasActivasUsuario = null;
   }
@@ -1633,14 +1652,193 @@ function cambiarVista(nombre){
   document.getElementById('viewDashboard').style.display = nombre==='dashboard' ? 'block' : 'none';
   document.getElementById('viewCotizaciones').style.display = nombre==='cotizaciones' ? 'block' : 'none';
   document.getElementById('viewAprobados').style.display = nombre==='aprobados' ? 'block' : 'none';
+  document.getElementById('viewPrecios').style.display = nombre==='precios' ? 'block' : 'none';
   document.getElementById('viewEmpresa').style.display = nombre==='empresa' ? 'block' : 'none';
   document.getElementById('viewCatalogo').style.display = nombre==='catalogo' ? 'block' : 'none';
   document.getElementById('appMain').style.display = nombre==='nueva' ? 'grid' : 'none';
   if (nombre==='dashboard') renderDashboardView();
   if (nombre==='cotizaciones') renderCotizacionesView();
   if (nombre==='aprobados') renderAprobadosView();
+  if (nombre==='precios') renderPreciosView();
   if (nombre==='empresa') renderEmpresaView();
   if (nombre==='catalogo') renderCatalogoView();
+}
+
+// ---------- Precios guardados en la cuenta ----------
+const PRECIOS_BASE = ()=>({ perfiles:{}, vidrio:{ Vidrio:0, Termopanel:0 }, manoObra:0, accesorios:0, margen:30, iva:19, m2Rate:0, m2IncluyeIVA:false, m2Minimo:1 });
+let preciosMaestros = null;      // lo que el usuario guardó en "Precios" (null = aún nada)
+let preciosCargadosPara = null;  // para no pisar ediciones al refrescarse la sesión
+
+function normalizarPrecios(src){
+  const b = PRECIOS_BASE(), x = src || {};
+  return { ...b, ...x, perfiles:{ ...(x.perfiles||{}) }, vidrio:{ ...b.vidrio, ...(x.vidrio||{}) } };
+}
+// valor de "over" si existe y no es 0; si no, el de "base"
+function completarVacios(base, over){
+  const out = { ...(base||{}) };
+  Object.keys(over||{}).forEach(k=>{ if (over[k]) out[k] = over[k]; else if (!(k in out)) out[k] = over[k]; });
+  return out;
+}
+async function cargarPreciosMaestros(){
+  if (!sbUser || preciosCargadosPara === sbUser.id) return;
+  const { data, error } = await sbClient.from('profiles').select('precios').eq('id', sbUser.id).single();
+  if (error) return; // si aún no se ejecutó el SQL, la app sigue funcionando sin precios guardados
+  preciosCargadosPara = sbUser.id;
+  preciosMaestros = (data && data.precios) ? data.precios : null;
+  if (preciosMaestros && proyecto.length === 0) aplicarPreciosMaestros();
+}
+function aplicarPreciosMaestros(){
+  if (!preciosMaestros) return;
+  const { largoBarra, kerf, ...resto } = normalizarPrecios(preciosMaestros);
+  precios = resto;
+  if (largoBarra) document.getElementById('inputBarra').value = largoBarra;
+  if (kerf !== undefined && kerf !== '') document.getElementById('inputKerf').value = kerf;
+  document.getElementById('cfgM2Rate').value = precios.m2Rate || 0;
+  document.getElementById('cfgM2Minimo').value = precios.m2Minimo || 1;
+  document.getElementById('cfgM2IVA').checked = !!precios.m2IncluyeIVA;
+  renderAll();
+}
+
+function codigosDeLinea(line){
+  const set = new Set();
+  (line.perfiles||[]).forEach(pf=>{
+    if (typeof pf.codigo === 'string') set.add(pf.codigo);
+    else Object.values(pf.codigo||{}).forEach(c=>{ if (c) set.add(c); });
+  });
+  return [...set];
+}
+
+function renderPreciosView(){
+  const el = document.getElementById('viewPrecios');
+  const edit = normalizarPrecios(preciosMaestros);
+  if (edit.largoBarra === undefined) edit.largoBarra = parseFloat(document.getElementById('inputBarra').value) || 6000;
+  if (edit.kerf === undefined) edit.kerf = parseFloat(document.getElementById('inputKerf').value);
+  if (edit.kerf === undefined || isNaN(edit.kerf)) edit.kerf = 3;
+
+  // Perfiles agrupados Material · Marca · Línea (solo las líneas que el usuario tiene activas)
+  const grupos = {};
+  lineasParaMostrar().forEach(l=>{
+    const m = metaLinea(l);
+    const clave = m.material + ' \u00b7 ' + m.marca + ' \u00b7 ' + m.linea;
+    (grupos[clave] = grupos[clave] || new Set());
+    codigosDeLinea(l).forEach(c=> grupos[clave].add(c));
+  });
+  const gruposHTML = Object.keys(grupos).map(g=>{
+    const codigos = [...grupos[g]];
+    const filas = codigos.map(c=>{
+      const info = nombreDePerfil(c);
+      const q = (info.nombre + ' ' + c).toLowerCase();
+      return '<div class="price-row" data-q="'+escHTML(q)+'">'+
+        '<div class="price-label"><div class="perfil-tag"><span class="p-icon">'+iconoPerfil(info.nombre)+'</span><span class="p-text"><span class="p-name">'+escHTML(info.nombre)+'</span>'+(info.mostrarCodigo?'<span class="p-code">'+escHTML(c)+'</span>':'')+'</span></div></div>'+
+        '<div class="price-input-wrap"><span>$</span><input type="number" min="0" step="100" class="pp-input" data-codigo="'+escHTML(c)+'" value="'+(edit.perfiles[c]||'')+'" inputmode="numeric"></div></div>';
+    }).join('');
+    return '<details class="precio-grupo" data-codigos="'+escHTML(codigos.join(','))+'"><summary>'+escHTML(g)+'<span class="cnt"></span></summary>'+filas+'</details>';
+  }).join('');
+
+  const num = (id, label, val, step, extra)=> '<div class="field"><label for="'+id+'">'+label+'</label><input type="number" id="'+id+'" min="0" step="'+(step||1)+'" value="'+(val===0||val?val:'')+'" inputmode="decimal"'+(extra||'')+'></div>';
+
+  el.innerHTML = `
+    <h2>Precios</h2>
+    <p class="sub">Guárdalos una vez y se cargan solos cada vez que empiezas una cotización nueva. En cada cotización igual puedes ajustarlos sin cambiar estos.</p>
+
+    <div class="precios-sec">
+      <h3>Ajustes generales</h3>
+      <div class="precios-grid">
+        ${num('prIVA','IVA (%)', edit.iva, 1)}
+        ${num('prMargen','Margen de utilidad (%)', edit.margen, 1)}
+        ${num('prMano','Mano de obra por ventana ($)', edit.manoObra, 500)}
+        ${num('prAcc','Accesorios / herrajes por ventana ($)', edit.accesorios, 500)}
+        ${num('prBarra','Largo de barra (mm)', edit.largoBarra, 100)}
+        ${num('prKerf','Grosor de sierra (mm)', edit.kerf, 0.5)}
+      </div>
+    </div>
+
+    <div class="precios-sec">
+      <h3>Cobro por m²</h3>
+      <p class="ayuda">Para cobrar por metro cuadrado, con un mínimo cobrable (por ejemplo, 1 m²: una ventana más chica paga igual ese mínimo).</p>
+      <div class="precios-grid">
+        ${num('prM2','Precio por m² ($)', edit.m2Rate, 1000)}
+        ${num('prM2Min','Mínimo cobrable (m²)', edit.m2Minimo, 0.1)}
+        <div class="chk"><input type="checkbox" id="prM2IVA" ${edit.m2IncluyeIVA?'checked':''}><label for="prM2IVA" style="text-transform:none; letter-spacing:0; font-size:13px; font-weight:400; margin:0;">Ese precio incluye IVA</label></div>
+      </div>
+    </div>
+
+    <div class="precios-sec">
+      <h3>Vidrio (precio por m²)</h3>
+      <div class="precios-grid">
+        ${num('prVidrio','Vidrio simple ($/m²)', edit.vidrio.Vidrio, 500)}
+        ${num('prTermo','Termopanel ($/m²)', edit.vidrio.Termopanel, 500)}
+      </div>
+    </div>
+
+    <div class="precios-sec">
+      <h3>Perfiles — precio por barra</h3>
+      <p class="ayuda">Precio de una barra completa, <b>sin IVA</b>. Si tu proveedor te da el precio con IVA, divídelo por 1,19. Solo aparecen las líneas que activaste en el Catálogo de líneas. Un perfil que se repite en varias líneas se llena una sola vez. Los precios de perfiles se usan en el modo "% Utilidad".</p>
+      <input type="text" class="precios-buscar" id="prBuscar" placeholder="Buscar perfil por nombre o código…">
+      ${gruposHTML || '<div class="empty">No hay líneas activas. Actívalas en el Catálogo de líneas.</div>'}
+    </div>
+
+    <div class="catalogo-footer">
+      <button id="btnGuardarPrecios">Guardar precios</button>
+      <span class="msg" id="preciosMsg"></span>
+    </div>`;
+
+  const msg = el.querySelector('#preciosMsg');
+  const sucio = ()=>{ msg.style.color = 'var(--ink-soft)'; msg.textContent = 'Cambios sin guardar'; };
+  const nv = (id)=> parseFloat(el.querySelector('#'+id).value);
+  const v0 = (id, def)=>{ const x = nv(id); return isNaN(x) ? def : x; };
+
+  function actualizarConteos(){
+    el.querySelectorAll('.precio-grupo').forEach(g=>{
+      const cods = g.dataset.codigos.split(',');
+      const con = cods.filter(c=> edit.perfiles[c] > 0).length;
+      g.querySelector('.cnt').textContent = con + ' de ' + cods.length + ' con precio';
+    });
+  }
+  actualizarConteos();
+
+  el.querySelectorAll('.pp-input').forEach(inp=>{
+    inp.addEventListener('input', ()=>{
+      const c = inp.dataset.codigo, val = parseFloat(inp.value) || 0;
+      edit.perfiles[c] = val;
+      el.querySelectorAll('.pp-input').forEach(o=>{ if (o !== inp && o.dataset.codigo === c) o.value = inp.value; });
+      actualizarConteos(); sucio();
+    });
+  });
+  el.querySelectorAll('.precios-grid input, .precios-grid select').forEach(i=> i.addEventListener('input', sucio));
+  el.querySelector('#prM2IVA').addEventListener('change', sucio);
+
+  el.querySelector('#prBuscar').addEventListener('input', e=>{
+    const q = e.target.value.trim().toLowerCase();
+    el.querySelectorAll('.precio-grupo').forEach(g=>{
+      let visibles = 0;
+      g.querySelectorAll('.price-row').forEach(r=>{
+        const ok = !q || r.dataset.q.indexOf(q) >= 0;
+        r.style.display = ok ? '' : 'none';
+        if (ok) visibles++;
+      });
+      g.style.display = visibles ? '' : 'none';
+      g.open = !!q && visibles > 0;
+    });
+  });
+
+  el.querySelector('#btnGuardarPrecios').addEventListener('click', async ()=>{
+    const nuevo = {
+      perfiles: Object.fromEntries(Object.entries(edit.perfiles).filter(([k,v])=> v > 0)),
+      vidrio: { Vidrio: v0('prVidrio',0), Termopanel: v0('prTermo',0) },
+      manoObra: v0('prMano',0), accesorios: v0('prAcc',0),
+      margen: v0('prMargen',30), iva: v0('prIVA',19),
+      m2Rate: v0('prM2',0), m2Minimo: v0('prM2Min',1) || 1, m2IncluyeIVA: el.querySelector('#prM2IVA').checked,
+      largoBarra: v0('prBarra',6000) || 6000, kerf: v0('prKerf',3),
+    };
+    msg.style.color = 'var(--ink-soft)'; msg.textContent = 'Guardando…';
+    const { error } = await sbClient.from('profiles').update({ precios: nuevo }).eq('id', sbUser.id);
+    if (error){ msg.style.color = 'var(--orange)'; msg.textContent = 'No se pudo guardar. ¿Ejecutaste el SQL de precios en Supabase? (' + error.message + ')'; return; }
+    preciosMaestros = nuevo;
+    if (proyecto.length === 0) aplicarPreciosMaestros();
+    msg.style.color = 'var(--blue)';
+    msg.textContent = proyecto.length === 0 ? 'Guardado ✓ — se usarán en tus cotizaciones' : 'Guardado ✓ — se usarán en tu próxima cotización nueva';
+  });
 }
 
 // ---------- Aviso de aportes voluntarios (se puede cerrar; vuelve a aparecer a los 14 días) ----------
@@ -1704,17 +1902,20 @@ document.querySelectorAll('.nav-item[data-view]').forEach(btn=>{
     if (v === 'nueva' && proyecto.length > 0){
       if (confirm('¿Empezar una cotización nueva? Se perderá lo que no hayas guardado del proyecto actual.')){
         proyecto = [];
+        proyectoActual = null;
         document.getElementById('datCliente').value = '';
         document.getElementById('datObra').value = '';
         renderAll();
       }
     }
+    if (v === 'nueva' && proyecto.length === 0){ proyectoActual = null; if (preciosMaestros) aplicarPreciosMaestros(); }
     cambiarVista(v);
   });
 });
 document.getElementById('btnSidebarLogout').addEventListener('click', async ()=>{
   cerrarMenuMovil();
   await sbClient.auth.signOut();
+  proyectoActual = null;
   refrescarSesion();
 });
 
@@ -2216,7 +2417,7 @@ function renderAuthUI(){
   });
 }
 
-async function guardarProyectoDB(){
+async function guardarProyectoDB(comoNueva){
   if (!sbUser){
     const gate = document.getElementById('gatePrompt');
     gate.style.display = 'block';
@@ -2225,8 +2426,13 @@ async function guardarProyectoDB(){
     return;
   }
   if (proyecto.length===0){ alert('Agrega al menos una ventana antes de guardar.'); return; }
-  const nombre = prompt('Nombre para este proyecto (ej: "Casa Los Aromos"):', document.getElementById('datObra').value || 'Proyecto sin nombre');
-  if (!nombre) return;
+  const actualiza = !!proyectoActual && !comoNueva;
+  let nombre = proyectoActual ? proyectoActual.nombre : '';
+  if (!actualiza){
+    const sugerido = comoNueva && proyectoActual ? proyectoActual.nombre + ' (copia)' : (document.getElementById('datObra').value || 'Proyecto sin nombre');
+    nombre = prompt('Nombre para este proyecto (ej: "Casa Los Aromos"):', sugerido);
+    if (!nombre) return;
+  }
   const payload = {
     proyecto,
     precios,
@@ -2247,13 +2453,28 @@ async function guardarProyectoDB(){
     data: payload,
     total_neto: Math.round(calcularSumaNetaActual()),
   };
-  let { error } = await sbClient.from('projects').insert(fila);
-  if (error){ // si aún no existe la columna total_neto, guarda igual sin ella
-    delete fila.total_neto;
-    ({ error } = await sbClient.from('projects').insert(fila));
+  let error, nuevoId = null;
+  if (actualiza){
+    // actualiza solo el contenido: no toca el estado ni el monto aprobado
+    const cambios = { cliente: fila.cliente, obra: fila.obra, data: fila.data, total_neto: fila.total_neto, updated_at: new Date().toISOString() };
+    ({ error } = await sbClient.from('projects').update(cambios).eq('id', proyectoActual.id).eq('user_id', sbUser.id));
+    if (error){ // si aún no existe la columna total_neto, guarda igual sin ella
+      delete cambios.total_neto;
+      ({ error } = await sbClient.from('projects').update(cambios).eq('id', proyectoActual.id).eq('user_id', sbUser.id));
+    }
+  } else {
+    let r = await sbClient.from('projects').insert(fila).select('id').single();
+    if (r.error){
+      delete fila.total_neto;
+      r = await sbClient.from('projects').insert(fila).select('id').single();
+    }
+    error = r.error; nuevoId = r.data && r.data.id;
   }
   if (error){ alert('Error al guardar: ' + error.message); return; }
-  renderListaProyectosGuardados();
+  if (nuevoId) proyectoActual = { id: nuevoId, nombre };
+  await renderListaProyectosGuardados();
+  const b = document.getElementById('guardadoBody').querySelector('.guardar-msg');
+  if (b){ b.textContent = actualiza ? 'Cambios guardados ✓' : 'Proyecto guardado ✓'; setTimeout(()=>{ b.textContent=''; }, 3000); }
 }
 
 async function renderListaProyectosGuardados(){
@@ -2265,9 +2486,23 @@ async function renderListaProyectosGuardados(){
   const { data, error } = await sbClient.from('projects').select('id,nombre,cliente,obra,updated_at').eq('user_id', sbUser.id).order('updated_at', {ascending:false});
   body.innerHTML = '';
   const btnGuardar = document.createElement('button');
-  btnGuardar.className = 'btn'; btnGuardar.textContent = '💾 Guardar proyecto actual';
-  btnGuardar.addEventListener('click', guardarProyectoDB);
+  btnGuardar.className = 'btn';
+  btnGuardar.textContent = proyectoActual ? '💾 Guardar cambios' : '💾 Guardar proyecto actual';
+  btnGuardar.addEventListener('click', ()=>guardarProyectoDB(false));
   body.appendChild(btnGuardar);
+  if (proyectoActual){
+    const btnNueva = document.createElement('button');
+    btnNueva.className = 'btn'; btnNueva.style.cssText = 'margin-left:8px; background:#fff; color:var(--ink); border:1px solid var(--line);';
+    btnNueva.textContent = 'Guardar como nueva';
+    btnNueva.addEventListener('click', ()=>guardarProyectoDB(true));
+    body.appendChild(btnNueva);
+    const abierto = document.createElement('div');
+    abierto.style.cssText = 'font-size:12px; color:var(--ink-soft); margin-top:8px;';
+    abierto.textContent = 'Abierto: ' + proyectoActual.nombre;
+    body.appendChild(abierto);
+  }
+  const msgG = document.createElement('div'); msgG.className = 'guardar-msg'; msgG.style.cssText = 'font-size:12px; color:var(--blue); margin-top:6px; min-height:0;';
+  body.appendChild(msgG);
   if (error || !data || data.length===0){
     const empty = document.createElement('div'); empty.className='empty'; empty.style.padding='16px 0 4px';
     empty.textContent = 'Aún no tienes proyectos guardados.';
@@ -2293,15 +2528,20 @@ async function renderListaProyectosGuardados(){
 }
 
 async function cargarProyectoDB(id){
-  const { data, error } = await sbClient.from('projects').select('data').eq('id', id).single();
+  const { data, error } = await sbClient.from('projects').select('data,nombre').eq('id', id).single();
   if (error || !data) return;
   const d = data.data;
+  proyectoActual = { id, nombre: data.nombre || 'Proyecto' };
   proyecto = (d.proyecto || []).map(it=>({
     modoPrecio: 'manual', precioManual: 0, descuentoItem: 0, colorId: 'blanco9010',
     ...it,
   }));
   nextId = Math.max(1, ...proyecto.map(i=>i.id||0)) + 1;
-  precios = { m2Rate:0, m2IncluyeIVA:false, m2Minimo:1, ...precios, ...(d.precios||{}) };
+  const dp = d.precios || {};
+  const pm = preciosMaestros || {};
+  precios = { m2Rate:0, m2IncluyeIVA:false, m2Minimo:1, ...precios, ...dp,
+    perfiles: completarVacios(pm.perfiles, dp.perfiles),
+    vidrio: completarVacios(pm.vidrio, dp.vidrio) };
   if (d.largoBarra) document.getElementById('inputBarra').value = d.largoBarra;
   if (d.kerf) document.getElementById('inputKerf').value = d.kerf;
   document.getElementById('datEmpresa').value = d.empresa||'';
@@ -2314,6 +2554,7 @@ async function cargarProyectoDB(id){
   document.getElementById('cfgM2Minimo').value = precios.m2Minimo||1;
   document.getElementById('cfgM2IVA').checked = !!precios.m2IncluyeIVA;
   renderAll();
+  renderListaProyectosGuardados();
   if (document.getElementById('appShell').style.display !== 'none'){
     cambiarVista('nueva');
   }
