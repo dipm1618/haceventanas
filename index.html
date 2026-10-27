@@ -306,6 +306,9 @@
   .nav-item{display:flex; align-items:center; gap:8px; padding:9px 10px; border:none; background:none; text-align:left; font-family:var(--sans); font-size:13px; color:var(--ink-soft); cursor:pointer; width:100%;}
   .nav-item:hover{background:var(--blue-soft);}
   .nav-item.active{background:var(--ink); color:#fff;}
+  .nav-item.nav-nueva{background:#D4550F; color:#fff; font-weight:600; justify-content:center; margin-bottom:10px;}
+  .nav-item.nav-nueva:hover{background:#B9480B;}
+  .nav-item.nav-nueva.active{background:#B9480B; box-shadow:inset 0 0 0 2px var(--ink);}
   .nav-item.disabled{color:var(--alum); cursor:default;}
   .nav-item.disabled:hover{background:none;}
   .nav-item .soon{margin-left:auto; font-family:var(--mono); font-size:9px; text-transform:uppercase; color:var(--alum); letter-spacing:.03em;}
@@ -551,10 +554,10 @@
   <aside class="sidebar">
     <div class="sidebar-brand"><div class="mark">HV</div><span>haceventanas</span><span class="menu-current" id="menuCurrent"></span><button type="button" class="menu-toggle" id="btnMenu" aria-label="Abrir menú" aria-expanded="false">☰</button></div>
     <nav class="sidebar-nav">
+      <button class="nav-item nav-nueva" data-view="nueva">+ Nueva cotización</button>
       <button class="nav-item active" data-view="dashboard">Dashboard</button>
       <button class="nav-item" data-view="cotizaciones">Cotizaciones</button>
       <button class="nav-item" data-view="aprobados">Proyectos aprobados</button>
-      <button class="nav-item" data-view="nueva">+ Nueva cotización</button>
       <button class="nav-item" data-view="catalogo">Catálogo de líneas</button>
       <button class="nav-item disabled">Inventario<span class="soon">Pronto</span></button>
       <button class="nav-item disabled">Clientes<span class="soon">Pronto</span></button>
