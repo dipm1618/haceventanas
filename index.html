@@ -368,6 +368,14 @@
   .legal-check a{color:var(--blue);}
   .link-btn{background:none; border:none; padding:0; margin:0 0 10px; font-family:var(--sans); font-size:12px; color:var(--blue); cursor:pointer; text-decoration:underline; display:block;}
   body.con-sesion #panelCuenta{display:none;}
+  #panelCuenta.destacado{border-color:var(--orange); border-top:4px solid var(--orange); box-shadow:0 8px 28px rgba(225,96,28,.20);}
+  #panelCuenta.destacado .panel-head{background:var(--orange-soft);}
+  #panelCuenta.destacado .panel-head h2{color:#9A3F0B;}
+  .auth-beneficios{list-style:none; padding:0; margin:0 0 16px; font-size:13px; line-height:1.5; color:var(--ink);}
+  .auth-beneficios li{padding-left:22px; position:relative; margin-bottom:5px;}
+  .auth-beneficios li::before{content:'\2713'; position:absolute; left:0; top:0; color:#D4550F; font-weight:700;}
+  .btn.btn-cta{background:#D4550F; color:#fff; font-weight:600; font-size:14.5px; padding:13px 16px; width:100%; border:none;}
+  .btn.btn-cta:hover{background:#B9480B;}
   .legal-links{font-family:var(--mono); font-size:10.5px; color:var(--ink-soft); padding:8px 8px 0; line-height:1.8;}
   .legal-links a{color:var(--ink-soft);}
   #mainFooter a{color:inherit;}
@@ -602,7 +610,7 @@
 <main id="appMain">
 
     <div class="panel" id="panelCuenta">
-      <div class="panel-head"><h2>Tu cuenta</h2><span class="count" id="planBadgeHead"></span></div>
+      <div class="panel-head"><h2 id="panelCuentaTitulo">Tu cuenta</h2><span class="count" id="planBadgeHead"></span></div>
       <div class="control-body" id="authBody"></div>
     </div>
 
@@ -2323,7 +2331,7 @@ async function renderCatalogoView(){
   });
 }
 
-let authModo = 'login';
+let authModo = 'signup';
 
 // ---------- Aceptación de términos y recuperación de contraseña ----------
 const TERMINOS_VERSION = '2026-10-18';
@@ -2380,6 +2388,10 @@ function renderAuthUI(){
   const body = document.getElementById('authBody');
   const badge = document.getElementById('planBadgeHead');
   badge.textContent = planActual === 'pro' ? 'Pro' : 'Gratis';
+  const panelC = document.getElementById('panelCuenta'), tituloC = document.getElementById('panelCuentaTitulo');
+  panelC.classList.toggle('destacado', !sbUser);
+  tituloC.textContent = sbUser ? 'Tu cuenta' : (authModo === 'signup' ? 'Crea tu cuenta gratis' : 'Inicia sesión');
+  if (!sbUser) badge.textContent = '';
 
   if (sbUser){
     body.innerHTML = `
@@ -2397,7 +2409,9 @@ function renderAuthUI(){
   }
 
   body.innerHTML = `
-    <p class="gate-sub" style="margin-top:0;">Crea tu cuenta gratis en 10 segundos para guardar tus proyectos y no perder tu trabajo.</p>
+    ${authModo==='signup'
+      ? '<ul class="auth-beneficios"><li>Guarda y vuelve a editar tus cotizaciones</li><li>Descarga los PDF de pauta de corte y presupuesto</li><li>Tus precios se cargan solos en cada cotización</li></ul>'
+      : '<p class="gate-sub" style="margin-top:0;">Entra a tu cuenta para ver tus proyectos guardados.</p>'}
     <div class="gate-toggle">
       <button id="authTabLogin" class="${authModo==='login'?'active':''}">Iniciar sesión</button>
       <button id="authTabSignup" class="${authModo==='signup'?'active':''}">Crear cuenta</button>
@@ -2405,9 +2419,9 @@ function renderAuthUI(){
     <div class="field"><label>Email</label><input type="email" id="authEmail" placeholder="tu@correo.com"></div>
     <div class="field"><label>Contraseña</label><input type="password" id="authPass" placeholder="Mínimo 6 caracteres"></div>
     ${authModo==='signup' ? checkboxTerminosHTML('authTerminos') : '<button type="button" class="link-btn" id="authOlvide">¿Olvidaste tu contraseña?</button>'}
-    <button class="btn" id="authSubmit">${authModo==='signup'?'Crear cuenta gratis':'Iniciar sesión'}</button>
+    <button class="btn btn-cta" id="authSubmit">${authModo==='signup'?'Crear cuenta gratis':'Iniciar sesión'}</button>
     <div class="auth-error" id="authError"></div>
-    ${authModo==='signup' ? '<p style="font-size:11px; color:var(--ink-soft); margin:8px 0 0;">Podrás completar los datos de tu empresa después, en "Mi empresa".</p>' : ''}
+    ${authModo==='signup' ? '<p style="font-size:11px; color:var(--ink-soft); margin:8px 0 0;">Toma 10 segundos. Podrás completar los datos de tu empresa después, en "Mi empresa".</p>' : ''}
   `;
 
   document.getElementById('authTabLogin').addEventListener('click', ()=>{ authModo='login'; renderAuthUI(); });
